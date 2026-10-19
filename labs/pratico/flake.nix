@@ -231,6 +231,9 @@
               pkgs.curl
               pkgs.fzf # zsh-ai picks a suggestion through fzf
               pkgs.just # `just jail-claude`, `just pull`, ...
+              pkgs.vale # ww3-gpu's `just vale` gate
+              pkgs.shellcheck # ww3-gpu's shell gate
+              pkgs.lychee # ww3-gpu's Markdown link gate (CI)
             ] ++ lib.optionals isLinux [
               aiJail # bubblewrap/Landlock/seccomp — Linux only
               pkgs.bubblewrap
