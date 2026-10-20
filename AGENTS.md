@@ -25,6 +25,7 @@ this repo's root system configuration is legacy (see below) and the living part 
 |---|---|---|
 | `labs/pratico` | WAVEWATCH III toolchain (gfortran / OpenMPI / NetCDF), zsh-ai pilot, ai-jail recipes | [ww-lab](https://github.com/h0ffmann/ww-lab) (sparse submodule) |
 | `labs/publisher` | pandoc + TeX Live, `mkPdf`, a composite Action that builds and commits PDFs; shields-badge filter + TikZ pills, color emoji, Japanese via luatexja (lualatex) | ww-lab (flake input + Action), [h0ffmann/h0ffmann](https://github.com/h0ffmann/h0ffmann) (CV PDF) |
+| `labs/ptbr-pdf` | pandoc + a minimal XeLaTeX (`texliveBasic` + the template's packages): one `to-pdf` command, 729 MiB against publisher's 3.2 GiB | [ptbr-writter](https://github.com/h0ffmann/ptbr-writter) (the plugin's `.pdf` output) |
 | `labs/lint` | hadolint, actionlint, shellcheck, ruff, pyflakes, cloc, coverage, pdoc — a list, no scripts | [marola](https://github.com/h0ffmann/marola) (flake input) |
 | `labs/agentic` | ai-jail, OpenCode, Open Code Review (`ocr`), gh, and `jail-run` / `gh-token` / `clip` / `clip-relay` | marola (landing via #50) |
 | `labs/cuda` | nixos-cuda binary cache setup, torch venv with the driver libs on its path; x86_64-linux only | marola, this workstation (landing via #50) |

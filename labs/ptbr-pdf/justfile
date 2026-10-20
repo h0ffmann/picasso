@@ -1,0 +1,24 @@
+# ptbr-pdf — Markdown to PDF for pt-BR text. `just` lists recipes.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+set positional-arguments
+here := justfile_directory()
+
+default:
+    @just --list
+
+# Markdown to PDF, from the directory you call it from: just to-pdf texto.md [saida.pdf].
+[no-cd]
+to-pdf *args:
+    nix run "{{here}}" -- "$@"
+
+# Enter the shell: to-pdf, pandoc and xelatex on PATH, in your current directory.
+shell:
+    nix develop "{{here}}"
+
+# Build the sample in the Nix sandbox and check accents and ⚠ survive (what CI builds).
+smoke:
+    nix build "{{here}}#smoke" --print-build-logs --out-link "{{here}}/result" && ls -l "{{here}}/result/"
+
+# The closure size a consumer downloads to disk.
+size:
+    nix path-info -Sh "$(nix build "{{here}}#to-pdf" --no-link --print-out-paths)"
