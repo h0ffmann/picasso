@@ -42,7 +42,7 @@
       # to-pdf FILE.md [OUT.pdf]: the one command. DejaVu by file name, so no fontconfig is needed.
       toPdfFor = pkgs: pkgs.writeShellApplication {
         name = "to-pdf";
-        runtimeInputs = [ pkgs.pandoc (texFor pkgs) ];
+        runtimeInputs = [ pkgs.pandoc (texFor pkgs) pkgs.coreutils ];
         text = ''
           in=''${1:?usage: to-pdf texto.md [saida.pdf]}
           out=''${2:-''${in%.*}.pdf}
