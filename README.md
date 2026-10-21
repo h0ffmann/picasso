@@ -285,14 +285,14 @@ just smoke            # a Gleam module to JavaScript, run on node and bundled, i
 
 ## agentic
 
-The sandbox for coding agents and the host-side scripts around it: **ai-jail** (bubblewrap /
+The sandbox for coding agents and the host-side tools around it: **ai-jail** (bubblewrap /
 Landlock / seccomp), **OpenCode**, **Open Code Review** (`ocr`, built from source), **gh**, and
-`jail-run` / `gh-token` / `clip` / `clip-relay` — one file each, with a `--self-test` that
+`jail-run` / `gh-token` / `clip` / `clip-relay` — one Rust binary each, with tests that
 `nix flake check` runs in the sandbox. See [`labs/agentic`](labs/agentic).
 
 ```console
 cd labs/agentic
-just self-test        # every script's --self-test, from source
+just test             # cargo test, clippy and rustfmt (nix flake check)
 just jco              # Claude Code inside ai-jail, in YOUR directory (jcf / jcs for other models, jo for OpenCode)
 just jocr             # Open Code Review inside ai-jail: project read-only, no GitHub token
 just jail-dry-run ls  # what ai-jail would run
@@ -308,7 +308,7 @@ just jail-dry-run ls  # what ai-jail would run
 | Reviewer      | [Open Code Review](https://github.com/alibaba/open-code-review) v1.12.7, `buildGoModule` from the tag — `jail-run ocr` gives it no token and a read-only project |
 | GitHub        | [gh](https://cli.github.com/); `gh-token` resolves the token on the host, `jail-run` forwards it as `GH_TOKEN` |
 | Clipboard     | `clip` (write-only, from inside the jail) → `clip-relay` → wl-copy / xclip |
-| Reuse         | `lib.<system>.{tools, env, scripts}`, `packages.<system>.{<script>, ocr}`, `checks.<system>.{gh-token, jail-run}` |
+| Reuse         | `lib.<system>.{tools, env, scripts}`, `packages.<system>.{<tool>, ocr}`, `checks.<system>.{tools, clippy, fmt}` |
 
 </details>
 
@@ -398,13 +398,13 @@ just smoke              # example/ graphed and queried in the sandbox (CI)
 ```
 .
 ├── labs/
-│   ├── pratico/        WW3 toolchain, zsh-ai pilot, ai-jail       (flake, lock, justfile, README, scripts/)
+│   ├── pratico/        WW3 toolchain, zsh-ai pilot, ai-jail       (flake, lock, justfile, README, tools/)
 │   ├── publisher/      pandoc + TeX Live, mkPdf, action.yml       (flake, lock, justfile, README, example/)
 │   ├── ptbr-pdf/       Rust + Typst, one to-pdf binary  (flake, lock, justfile, README, example/)
 │   ├── lint/           lint toolchain as one list, checks.versions   (flake, lock, justfile, README)
 │   ├── paper/          pandoc + crossref, XeLaTeX / pdfLaTeX for papers  (flake, lock, justfile, README, example/)
 │   ├── gleam-website/  Gleam (JavaScript) + node + esbuild for sites  (flake, lock, justfile, README, example/)
-│   ├── agentic/        ai-jail, OpenCode, ocr, gh, jail-run/gh-token/clip  (flake, lock, justfile, README, scripts/)
+│   ├── agentic/        ai-jail, OpenCode, ocr, gh, jail-run/gh-token/clip  (flake, lock, justfile, README, tools/)
 │   ├── cuda/           CUDA binary cache + torch venv, x86_64 only   (flake, lock, justfile, README, scripts/)
 │   ├── present/        annotate, capture, record, webcam `cam`, presenters  (flake, lock, justfile, README, scripts/)
 │   └── viz/            graphify: the code graph of a repo, offline  (flake, lock, justfile, README, scripts/, example/)
@@ -523,8 +523,9 @@ $ nix flake show github:h0ffmann/picasso?dir=labs/gleam-website
 $ nix flake show github:h0ffmann/picasso?dir=labs/agentic
 ├───checks
 │   └───x86_64-linux
-│       ├───gh-token: CI test           # the script's --self-test, in the sandbox
-│       ├───jail-run: CI test
+│       ├───clippy: CI test
+│       ├───fmt: CI test
+│       ├───tools: CI test              # cargo test of jail-run, gh-token, clip, in the sandbox
 │       └───lab-json: CI test
 ├───devShells
 │   └───x86_64-linux
@@ -600,7 +601,7 @@ Three ways, all used by ww-lab:
 # 1. as a flake input (publisher exports lib.<system>.mkPdf; see labs/publisher/README.md)
 inputs.publisher.url = "github:h0ffmann/picasso?dir=labs/publisher";
 
-# 2. as a sparse git submodule, only the lab checked out (labs/pratico/scripts/ww-lab-submodule.sh)
+# 2. as a sparse git submodule, only the lab checked out (`nix run ./labs/pratico#ww-lab-submodule`)
 nix develop ./nix-config/labs/pratico#ww3
 
 # 3. in GitHub Actions (build, upload and commit PDFs in one step)

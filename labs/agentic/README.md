@@ -1,12 +1,12 @@
 # agentic
 
-The sandbox for coding agents, and the host-side scripts around it: **ai-jail**
+The sandbox for coding agents, and the host-side tools around it: **ai-jail**
 (bubblewrap / Landlock / seccomp, Linux), **OpenCode**, **`ocr`** ([Open Code
 Review](https://github.com/alibaba/open-code-review) v1.12.7, Apache-2.0, built here with
-`buildGoModule` from the tag), **gh**, and four scripts that are one file each, run from source by
-CI and wrapped by `writeShellApplication` for consumers:
+`buildGoModule` from the tag), **gh**, and four tools, one Rust binary each (the crate is
+`tools/`, built by `buildRustPackage` and wrapped with the runtime tools on `PATH` for consumers):
 
-| Script | Does |
+| Tool | Does |
 |---|---|
 | `jail-run claude [args]` / `jail-run opencode [args]` | the agent inside ai-jail, from the current directory, with the host's GitHub token forwarded as `GH_TOKEN`; `jail-run --dry-run -- <cmd>` prints the sandbox line and runs nothing |
 | `jail-run ocr [args]` | Open Code Review in the same jail on *reviewer* terms: no GitHub token, no agent state, the project read-only, one writable directory (`$JAIL_OCR_OUT`, which is also the jail's `HOME`). `JAIL_DRY_RUN=1` prints the sandbox line for any mode |
@@ -16,7 +16,7 @@ CI and wrapped by `writeShellApplication` for consumers:
 
 ```
 just shell            # the tools on PATH
-just self-test        # every script's --self-test, from source
+just test             # cargo test (against fakes on PATH), clippy and rustfmt: nix flake check
 just jco / jcf / jcs  # Claude Code (opus / fable / sonnet) inside ai-jail — in YOUR directory ([no-cd])
 just jo               # OpenCode inside ai-jail
 just jocr             # Open Code Review inside ai-jail
@@ -107,9 +107,9 @@ jail-dry-run *cmd:
 ```
 
 `lib.${system}` exposes `tools` (the list, `ocr` included), `env` (`BWRAP_BIN`, Linux) and
-`scripts` (the four packages); `packages.${system}.<script>` and `packages.${system}.ocr` for
-`nix run`; `checks.${system}.{gh-token,jail-run}` run the self-tests in the sandbox against fakes
-on `PATH`.
+`scripts` (the four packages); `packages.${system}.<tool>` and `packages.${system}.ocr` for
+`nix run`; `checks.${system}.{tools,clippy,fmt}` run the crate's tests in the sandbox against fakes
+of `gh` and `ai-jail` on `PATH`, then clippy and rustfmt.
 
 First consumer: [marola](https://github.com/h0ffmann/marola). `labs/pratico` still carries its
-own copies of these scripts and recipes; making it consume this lab is a follow-up.
+own copies of these tools and recipes; making it consume this lab is a follow-up.

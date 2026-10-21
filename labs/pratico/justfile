@@ -136,18 +136,20 @@ jail-dry-run *cmd:
 gh-auth *args:
     #!/usr/bin/env bash
     set -euo pipefail
+    # The Rust tools (labs/pratico/tools): already on PATH inside `just dev`, built from the flake otherwise.
+    command -v gh-token >/dev/null 2>&1 || export PATH="$(nix build --no-link --print-out-paths "{{here}}#tools")/bin:$PATH"
     case "{{args}}" in
         *--refresh*) exec gh auth refresh ;;
         *--login*)   exec gh auth login ;;
     esac
-    if src="$("{{here}}/scripts/gh-token.sh" --source)"; then
+    if src="$(gh-token --source)"; then
         echo "gh-auth: already authenticated — $src"
         if [ "$src" = "gh:host-login" ]; then gh auth status 2>&1 | sed 's/^/  /'; fi
         echo 'gh-auth: "just jco" will forward this token into the jail; no login needed in there.'
     else
         echo "gh-auth: no credential on this host yet — running gh auth login (one time)."
         gh auth login
-        "{{here}}/scripts/gh-token.sh" --source >/dev/null && echo "gh-auth: done — now run: just jco"
+        gh-token --source >/dev/null && echo "gh-auth: done — now run: just jco"
     fi
 
 #   PRATICO_JAIL_CLIPBOARD=1        write-only clipboard bridge (`just clip` from inside the jail)
@@ -158,6 +160,8 @@ jail-claude *args:
     #!/usr/bin/env bash
     set -euo pipefail
     cd "{{here}}"
+    # The Rust tools (labs/pratico/tools): already on PATH inside `just dev`, built from the flake otherwise.
+    command -v gh-token >/dev/null 2>&1 || export PATH="$(nix build --no-link --print-out-paths "{{here}}#tools")/bin:$PATH"
     relay_pid=""
     cleanup() {
         if [ -n "$relay_pid" ]; then
@@ -171,7 +175,7 @@ jail-claude *args:
         fifo=".tmp/clip.fifo"
         rm -f "$fifo"
         mkfifo "$fifo"
-        scripts/clip-relay.sh "$fifo" &
+        clip-relay "$fifo" &
         relay_pid=$!
         sleep 0.2
         if ! kill -0 "$relay_pid" 2>/dev/null; then
@@ -186,9 +190,9 @@ jail-claude *args:
     fi
     # Resolve the token out here, on the host, where the real gh login lives: ~/.config/gh is
     # deliberately NOT mapped into the jail, so authenticating inside it writes to an ephemeral
-    # HOME and is gone by the next session. See scripts/gh-token.sh.
-    if src="$(scripts/gh-token.sh --source)"; then
-        GH_TOKEN="$(scripts/gh-token.sh)"
+    # HOME and is gone by the next session. See labs/pratico/tools (gh-token).
+    if src="$(gh-token --source)"; then
+        GH_TOKEN="$(gh-token)"
         export GH_TOKEN
         echo "jail-claude: GH_TOKEN from $src — gh works inside the jail, no login needed" >&2
     else
@@ -215,8 +219,10 @@ jail-opencode *args:
     #!/usr/bin/env bash
     set -euo pipefail
     cd "{{here}}"
-    if src="$(scripts/gh-token.sh --source)"; then
-        GH_TOKEN="$(scripts/gh-token.sh)"
+    # The Rust tools (labs/pratico/tools): already on PATH inside `just dev`, built from the flake otherwise.
+    command -v gh-token >/dev/null 2>&1 || export PATH="$(nix build --no-link --print-out-paths "{{here}}#tools")/bin:$PATH"
+    if src="$(gh-token --source)"; then
+        GH_TOKEN="$(gh-token)"
         export GH_TOKEN
         echo "jail-opencode: GH_TOKEN from $src" >&2
     fi
@@ -227,4 +233,11 @@ jo *args: (jail-opencode args)
 
 # Push stdin (or --text "…") to the clipboard — write-only, no paste counterpart.
 clip *args:
-    "{{here}}/scripts/clip.sh" {{args}}
+    #!/usr/bin/env bash
+    set -euo pipefail
+    command -v clip >/dev/null 2>&1 || export PATH="$(nix build --no-link --print-out-paths "{{here}}#tools")/bin:$PATH"
+    PRATICO_ROOT="{{here}}" exec clip {{args}}
+
+# The tools' tests (cargo test), clippy and rustfmt, in the Nix sandbox.
+tools-test:
+    nix build --no-link --print-build-logs "{{here}}#checks.$(nix eval --impure --raw --expr builtins.currentSystem).tools" "{{here}}#checks.$(nix eval --impure --raw --expr builtins.currentSystem).tools-clippy" "{{here}}#checks.$(nix eval --impure --raw --expr builtins.currentSystem).tools-fmt"

@@ -1,4 +1,4 @@
-# agentic — ai-jail, OpenCode, gh, and the host-side scripts for sandboxed coding agents.
+# agentic — ai-jail, OpenCode, gh, and the host-side tools for sandboxed coding agents.
 # The jail recipes run in YOUR directory (`[no-cd]`), which must hold the project's `.ai-jail`:
 #   just -f <nix-config>/labs/agentic/justfile jco
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -11,10 +11,9 @@ default:
 shell:
     nix develop "{{here}}"
 
-# Run every script's --self-test from source (what CI runs before the flake check).
-self-test:
-    "{{here}}/scripts/gh-token" --self-test
-    PATH="{{here}}/scripts:$PATH" "{{here}}/scripts/jail-run" --self-test
+# The tools' tests (cargo test, against fakes on PATH), then clippy and rustfmt: `nix flake check`.
+test:
+    nix flake check --no-update-lock-file "{{here}}"
 
 # Print the sandbox invocation ai-jail would use for <cmd>, without running it.
 [no-cd]

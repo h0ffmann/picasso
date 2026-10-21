@@ -1,0 +1,10 @@
+[package]
+name = "agentic-tools"
+version = "0.1.0"
+edition = "2021"
+description = "jail-run, gh-token, clip and clip-relay: host-side tools for running coding agents in ai-jail"
+license = "Apache-2.0"
+publish = false
+
+[profile.release]
+strip = true
