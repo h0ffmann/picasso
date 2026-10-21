@@ -409,8 +409,9 @@ just smoke              # example/ graphed and queried in the sandbox (CI)
 │   ├── present/        annotate, capture, record, webcam `cam`, presenters  (flake, lock, justfile, README, scripts/)
 │   └── viz/            graphify: the code graph of a repo, offline  (flake, lock, justfile, README, scripts/, example/)
 ├── site/               the site, Gleam + Lustre: own flake, `just ci`, deployed to GitHub Pages
-├── scripts/            release.sh (`just release`),
-│                       social.py (Threads posts, `just social`; docs/adr/0001)
+├── scripts/            release.sh (`just release`)
+├── tools/              Rust crates: citation (`just citation`), zenodo, social (Threads posts,
+│                       `just social`; docs/adr/0001), render, site-check, site-releases, sharingan
 ├── WHITEPAPER.md       the determinism whitepaper in ASD-STE100 (and WHITEPAPER.pdf);
 │                       PICASSOPAPER.pdf is the original, coloured paper
 ├── docs/               media/ (logo), whitepapers/ and studies/ (the sources of the PDFs under Papers),

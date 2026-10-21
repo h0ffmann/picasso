@@ -1,0 +1,14 @@
+[package]
+name = "social"
+version = "0.1.0"
+edition = "2024"
+description = "Instagram post status checks and Threads posting for docs/social"
+license = "Apache-2.0"
+publish = false
+
+[dependencies]
+regex = "1"
+serde = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
+ureq = { version = "3", default-features = false, features = ["rustls"] }
+zip = { version = "2", default-features = false, features = ["deflate"] }

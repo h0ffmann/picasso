@@ -113,8 +113,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - run: python3 scripts/social.py --self-test
-      - run: python3 scripts/social.py check
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - run: nix run ./tools#social -- --self-test
+      - run: nix run ./tools#social -- check
 
   # .claude/skills/ouroboric-sharingan: the licence scanner and the benchmark runner's self-tests
   # (no model calls; the benchmark itself runs by hand, evals/BENCHMARK.md).
