@@ -322,16 +322,67 @@ fn link_adds_the_referenced_nodes_of_another_repository() {
         .filter(|n| n["id"].as_str().unwrap().starts_with("b:"))
         .collect();
     assert_eq!(ext.len(), 2);
-    // the page: one relative link per external node, no network, no href attribute
+    // the page: one relative link per external node, no network
     let h = std::fs::read_to_string(out.join("graph.html")).unwrap();
     assert!(h.contains("b.html#node=labs_x_flake") && h.contains("external: b"));
     // the relations legend lists what the graph has
     assert!(h.contains("<i class=\"l depends_on\">") && !h.contains("<i class=\"l references\">"));
-    for bad in [
-        "http://", "https://", "src=", "href=", "@import", "url(", "<link",
-    ] {
+    for bad in ["http://", "https://", "src=", "@import", "url(", "<link"] {
         assert!(!h.contains(bad), "graph.html contains {bad}");
     }
+    // the hyperlinks: the header link and the two SVG <a>, nothing else
+    assert_eq!(
+        hrefs(&h),
+        [
+            "b.html",
+            "b.html#node=labs_x_flake",
+            "b.html#node=labs_y_main"
+        ]
+    );
+    assert!(h.contains("\u{2197} b</a>") && h.contains("open in b's graph"));
+    assert!(h.contains("<a class=\"hop\" href=\"b.html#node=labs_x_flake\"><title>"));
+    assert!(h.contains("b: labs/x \u{2197}</text></a>"));
+}
+
+fn hrefs(h: &str) -> Vec<String> {
+    let mut v: Vec<String> = h
+        .split("href=\"")
+        .skip(1)
+        .map(|r| r[..r.find('"').unwrap()].to_string())
+        .collect();
+    v.sort();
+    v.dedup();
+    v
+}
+
+#[test]
+fn backlink_adds_a_header_link_and_nothing_else() {
+    let (a, _) = two_repos("backlink");
+    let (plain, back) = (a.parent().unwrap().join("p"), a.parent().unwrap().join("q"));
+    extract(&a, &plain);
+    let st = bin()
+        .arg("extract")
+        .arg(&a)
+        .args(["--backlink", "b=graph.html", "--out"])
+        .arg(&back)
+        .status()
+        .unwrap();
+    assert!(st.success());
+    let h = std::fs::read_to_string(back.join("graph.html")).unwrap();
+    assert_eq!(hrefs(&h), ["graph.html"]);
+    assert!(h.contains("<a class=\"hop back\" href=\"graph.html\">\u{2190} b</a>"));
+    assert_eq!(
+        std::fs::read(plain.join("graph.json")).unwrap(),
+        std::fs::read(back.join("graph.json")).unwrap()
+    );
+    let st = bin()
+        .arg("extract")
+        .arg(&a)
+        .args(["--backlink", "b=javascript:alert(1)", "--out"])
+        .arg(a.parent().unwrap().join("bad2"))
+        .status()
+        .unwrap();
+    assert!(!st.success());
 }
 
 #[test]

@@ -28,22 +28,41 @@ pub fn parse_spec(s: &str) -> Result<(String, PathBuf, String), String> {
     let (name, rest) = s
         .split_once('=')
         .ok_or("--link needs NAME=PATH/graph.json[@URL]")?;
+    check_name(name, "--link")?;
+    let (path, url) = match rest.rsplit_once('@') {
+        Some((p, u)) => (p, u.to_string()),
+        None => (rest, format!("{name}.html")),
+    };
+    if path.is_empty() || !url_ok(&url) {
+        return Err(format!("--link: bad path or URL in {s:?}"));
+    }
+    Ok((name.to_string(), path.into(), url))
+}
+
+fn check_name(name: &str, flag: &str) -> Result<(), String> {
     if name.is_empty()
         || !name
             .chars()
             .all(|c| c.is_alphanumeric() || "_.-".contains(c))
     {
-        return Err(format!("--link: bad name {name:?}"));
+        return Err(format!("{flag}: bad name {name:?}"));
     }
-    let (path, url) = match rest.rsplit_once('@') {
-        Some((p, u)) => (p, u.to_string()),
-        None => (rest, format!("{name}.html")),
-    };
-    // the URL ends up in a link the page follows: relative, http or https only
-    if path.is_empty() || url.is_empty() || (url.contains(':') && !url.starts_with("http")) {
-        return Err(format!("--link: bad path or URL in {s:?}"));
+    Ok(())
+}
+
+// the URL ends up in a link the page follows: relative, http or https only
+fn url_ok(url: &str) -> bool {
+    !url.is_empty() && (!url.contains(':') || url.starts_with("http"))
+}
+
+/// `NAME=URL` into (NAME, URL): the page that links back to the page of NAME.
+pub fn parse_backlink(s: &str) -> Result<(String, String), String> {
+    let (name, url) = s.split_once('=').ok_or("--backlink needs NAME=URL")?;
+    check_name(name, "--backlink")?;
+    if !url_ok(url) {
+        return Err(format!("--backlink: bad URL in {s:?}"));
     }
-    Ok((name.to_string(), path.into(), url))
+    Ok((name.to_string(), url.to_string()))
 }
 
 fn path_at(s: &str) -> &str {

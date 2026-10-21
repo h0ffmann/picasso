@@ -14,7 +14,7 @@ const USAGE: &str = "code-graph: the code graph of a repository, in graphify's g
 
 usage:
   code-graph extract DIR [--out OUTDIR] [--no-viz] [--exclude PATH]... [--title TEXT]
-                         [--link NAME=PATH/graph.json[@URL]]...
+                         [--link NAME=PATH/graph.json[@URL]]... [--backlink NAME=URL]...
                                                      parse DIR, write graph.json, GRAPH_REPORT.md, graph.html
   code-graph update DIR [--out OUTDIR] [--no-viz]    same as extract (nothing is cached)
   code-graph cluster-only DIR [--graph FILE]         cluster an existing graph.json again
@@ -25,7 +25,8 @@ usage:
 A directory below DIR that has its own .git (a submodule, a nested repository) is skipped.
 --exclude PATH skips one more path, relative to DIR; repeat it. --title names the page (default: the directory name).
 --link NAME=GRAPH[@URL] adds the nodes of another repository's graph.json that DIR refers to (a flake
-?dir=PATH, a GitHub tree/blob URL, lab=PATH) as external nodes; clicking one opens URL (default NAME.html).
+?dir=PATH, a GitHub tree/blob URL, lab=PATH) as external nodes; each is a hyperlink to URL (default
+NAME.html), and the page header gets a link \"↗ NAME\". --backlink NAME=URL adds a header link \"← NAME\".
 (--code-only and --no-label are accepted and ignored: this tool only does code, with no model)
 Default OUTDIR and graph: graphify-out/ (graph.json).
 ";
@@ -40,6 +41,7 @@ struct Args {
     exclude: Vec<String>,
     title: Option<String>,
     link: Vec<String>,
+    backlink: Vec<String>,
 }
 
 fn parse(v: Vec<String>) -> Result<Args, String> {
@@ -53,6 +55,7 @@ fn parse(v: Vec<String>) -> Result<Args, String> {
         exclude: vec![],
         title: None,
         link: vec![],
+        backlink: vec![],
     };
     let mut it = v.into_iter();
     while let Some(x) = it.next() {
@@ -73,6 +76,7 @@ fn parse(v: Vec<String>) -> Result<Args, String> {
             "--no-viz" => a.viz = false,
             "--exclude" => a.exclude.push(val("--exclude")?),
             "--link" => a.link.push(val("--link")?),
+            "--backlink" => a.backlink.push(val("--backlink")?),
             "--title" => a.title = Some(val("--title")?),
             "--code-only" | "--no-label" => {}
             _ => a.pos.push(x),
@@ -162,13 +166,13 @@ fn write(p: &Path, s: &str) -> Result<(), String> {
     std::fs::write(p, s).map_err(|e| format!("{}: {e}", p.display()))
 }
 
-fn emit(g: &Graph, dir: &Path, name: &str, viz: bool) -> Result<(), String> {
+fn emit(g: &Graph, dir: &Path, name: &str, viz: bool, nav: &html::Nav) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     let json = serde_json::to_string_pretty(&g.to_json()).map_err(|e| e.to_string())?;
     write(&dir.join("graph.json"), &(json + "\n"))?;
     write(&dir.join("GRAPH_REPORT.md"), &report(g, name))?;
     if viz {
-        write(&dir.join("graph.html"), &html::render(g, name))?;
+        write(&dir.join("graph.html"), &html::render(g, name, nav))?;
     }
     eprintln!(
         "[code-graph] wrote {}: {} nodes, {} edges, {} communities",
@@ -209,10 +213,15 @@ fn run() -> Result<(), String> {
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_else(|| "graph".into());
             let mut g = extract::extract(&canon, &a.exclude);
+            let mut nav = html::Nav::default();
+            for b in &a.backlink {
+                nav.back.push(link::parse_backlink(b)?);
+            }
             if !a.link.is_empty() {
                 let mut links = vec![];
                 for spec in &a.link {
                     let (name, path, url) = link::parse_spec(spec)?;
+                    nav.to.push((name.clone(), url.clone()));
                     links.push(link::Link {
                         name,
                         graph: load(&path)?,
@@ -231,6 +240,7 @@ fn run() -> Result<(), String> {
                 &a.out.clone().unwrap_or_else(|| root.join("graphify-out")),
                 a.title.as_deref().unwrap_or(&name),
                 a.viz,
+                &nav,
             )
         }
         "cluster-only" => {
@@ -246,13 +256,18 @@ fn run() -> Result<(), String> {
                 p.parent().unwrap_or(Path::new(".")),
                 a.title.as_deref().unwrap_or("graph"),
                 a.viz,
+                &html::Nav::default(),
             )
         }
         "html" => {
             let g = load(&gpath)?;
             write(
                 &a.out.clone().unwrap_or_else(|| "graph.html".into()),
-                &html::render(&g, a.title.as_deref().unwrap_or("graph")),
+                &html::render(
+                    &g,
+                    a.title.as_deref().unwrap_or("graph"),
+                    &html::Nav::default(),
+                ),
             )
         }
         "query" => {
