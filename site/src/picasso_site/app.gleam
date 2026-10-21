@@ -995,7 +995,7 @@ fn footer(updated: String) -> Element(msg) {
       html.text(
         "); changelog from the release tags and DOIs from Zenodo, both at build time (",
       ),
-      html.code([], [html.text("site/releases.py")]),
+      html.code([], [html.text("tools/site-releases")]),
       html.text(
         "); standings from the public GitHub API, fetched in your browser and cached for ten minutes. ",
       ),

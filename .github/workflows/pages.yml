@@ -2,7 +2,7 @@
 # to GitHub Pages: https://h0ffmann.github.io/picasso/.
 # Needs Settings → Pages → Source: GitHub Actions; the custom domain plan is #85.
 # release.yml dispatches it after a v* tag: the full clone gives `just build` the tags, from
-# which site/releases.py writes the version badge and the changelog.
+# which tools/site-releases writes the version badge and the changelog.
 name: pages
 
 on:

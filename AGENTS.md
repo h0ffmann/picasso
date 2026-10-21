@@ -211,7 +211,7 @@ point: a session must not make its own rules weaker.
 | `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json` | the rules and the permissions of every agent |
 | `LICENSE`, `LICENSES/`, `REUSE.toml`, `.zenodo.json` | the licence, the copyright holders and the citation |
 | `.github/workflows/`, `.github/CODEOWNERS` | the CI gate and who reviews |
-| `site/check.py`, `site/src/picasso_site/family.gleam` | the logos and the credit hard rule |
+| `tools/site-check/`, `site/src/picasso_site/family.gleam` | the logos and the credit hard rule |
 | `scripts/release.sh` | releases make a permanent DOI |
 | `hardware-configuration.nix` | generated on the machine, never by an agent |
 

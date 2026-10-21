@@ -1,5 +1,5 @@
 //// Hard rule (AGENTS.md): the page always shows the Marola and Ouroboric logos, hotlinked from
-//// their own repositories at a pinned commit, never copied here. `check.py` fails CI without
+//// their own repositories at a pinned commit, never copied here. `site-check` fails CI without
 //// them. Bump a commit when a project changes its logo.
 
 import lustre/attribute

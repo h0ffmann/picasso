@@ -675,7 +675,7 @@ The tag starts [`release.yml`](.github/workflows/release.yml), which does these 
    Zenodo does not archive an earlier release. v0.1.0 was released before the switch, so it has
    no DOI; v0.1.1 is the first release on Zenodo.
 3. It starts [`pages.yml`](.github/workflows/pages.yml) on `main`. The site then shows the new
-   version and its changelog, which `site/releases.py` makes from the tags.
+   version and its changelog, which `tools/site-releases/` makes from the tags.
 
 A Zenodo DOI is permanent. For this reason, `scripts/release.sh` stops if `main` is not clean,
 if `main` has no new commits, or if the new version is not more than the last tag.
@@ -723,7 +723,7 @@ GitHub-hosted runners only. [`ci.yml`](.github/workflows/ci.yml):
   `deadnix`, `shellcheck` on every script, justfile parse, and the lab's self-tests when it has
   them. Lint tools come from the lab's own locked nixpkgs.
 * **site rules** — in `site/`'s own flake: `nix flake check`, `nixpkgs-fmt`, then `just ci`
-  (`gleam format --check`, the unit tests, the build, and `check.py` on the built page: both
+  (`gleam format --check`, the unit tests, the build, and `site-check` on the built page: both
   logos hotlinked, Gabriel Volpe credited, the hosting plan linked).
   [`pages.yml`](.github/workflows/pages.yml) runs the same `just ci` and publishes `site/dist`.
 * **release** — [`release.yml`](.github/workflows/release.yml), on a pushed `v*` tag: the

@@ -135,7 +135,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v23
       - run: nix run nixpkgs#actionlint
 
-  # The Gleam site: format, unit tests, the build, and check.py's hard rules on the built page.
+  # The Gleam site: format, unit tests, the build, and site-check's hard rules on the built page.
   site:
     name: site rules
     runs-on: ubuntu-latest

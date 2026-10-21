@@ -20,6 +20,6 @@ pub fn relative_time(iso: String) -> String
 @external(javascript, "../picasso_site_ffi.mjs", "now_local")
 pub fn now_local() -> String
 
-/// The releases and DOIs as JSON, written by `releases.py` before the build.
+/// The releases and DOIs as JSON, written by `site-releases` before the build.
 @external(javascript, "../picasso_site_releases.mjs", "releases")
 pub fn releases() -> String
