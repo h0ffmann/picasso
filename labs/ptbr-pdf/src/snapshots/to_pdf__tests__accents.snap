@@ -1,0 +1,7 @@
+---
+source: src/main.rs
+expression: "to_typst(\"# Ação e coração\\n\\nÀ vista, pão, é, ü — “aspas”.\")"
+---
+= Ação e coração
+
+À vista, pão, é, ü — “aspas”\.

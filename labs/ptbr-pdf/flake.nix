@@ -13,7 +13,7 @@
 
       src = lib.fileset.toSource {
         root = ./.;
-        fileset = lib.fileset.unions [ ./Cargo.toml ./Cargo.lock ./src ./example ];
+        fileset = lib.fileset.unions [ ./Cargo.toml ./Cargo.lock ./src ./example ./fonts ];
       };
 
       # to-pdf FILE.md [OUT.pdf]: pulldown-cmark -> Typst markup -> typst crate -> PDF. Fonts are
@@ -24,8 +24,14 @@
         version = "0.1.0";
         inherit src;
         cargoLock.lockFile = ./Cargo.lock;
+        # a changed snapshot fails the build; it never rewrites one
+        env = { INSTA_UPDATE = "no"; CI = "true"; };
+        stripAllList = [ "bin" ]; # the symbol table too, not only debug info
         meta.mainProgram = "to-pdf";
       };
+
+      # bytes: the measured size of packages.to-pdf plus 10% (README, Size).
+      sizeCeiling = 29200000;
 
       # Same sources, `cargo clippy -D warnings` as the build.
       clippyFor = pkgs: (toPdfFor pkgs).overrideAttrs (old: {
@@ -54,11 +60,11 @@
         default = toPdfFor pkgs;
         to-pdf = toPdfFor pkgs;
         smoke = pkgs.runCommand "ptbr-pdf-smoke" { nativeBuildInputs = [ (toPdfFor pkgs) pkgs.poppler-utils ]; } ''
-          export HOME=$TMPDIR OUT_DIR=$TMPDIR/out
-          bash ${./example}/build.sh
-          pdftotext "$OUT_DIR/smoke.pdf" - | grep -q 'ação, coração, pão' || { echo "smoke: accents lost" >&2; exit 1; }
-          pdftotext "$OUT_DIR/smoke.pdf" - | grep -q '⚠' || { echo "smoke: ⚠ lost" >&2; exit 1; }
-          mkdir -p "$out" && cp "$OUT_DIR/smoke.pdf" "$out"/
+          export HOME=$TMPDIR
+          mkdir -p "$out"
+          to-pdf ${./example/smoke.md} "$out/smoke.pdf"
+          pdftotext "$out/smoke.pdf" - | grep -q 'ação, coração, pão' || { echo "smoke: accents lost" >&2; exit 1; }
+          pdftotext "$out/smoke.pdf" - | grep -q '⚠' || { echo "smoke: ⚠ lost" >&2; exit 1; }
         '';
       } // lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
         # a static musl binary, for release assets
@@ -72,7 +78,7 @@
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {
           name = "ptbr-pdf";
-          packages = [ pkgs.rustc pkgs.cargo pkgs.clippy pkgs.rustfmt pkgs.rust-analyzer ] ++ lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.gcc;
+          packages = [ pkgs.rustc pkgs.cargo pkgs.clippy pkgs.rustfmt pkgs.rust-analyzer pkgs.cargo-insta ] ++ lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.gcc;
         };
       });
 
@@ -80,8 +86,15 @@
         lab-json = labCardFor pkgs;
         to-pdf = toPdfFor pkgs; # builds and runs cargo test
         clippy = clippyFor pkgs;
-        fmt = pkgs.runCommand "to-pdf-fmt" { nativeBuildInputs = [ pkgs.rustfmt ]; } ''
-          rustfmt --check --edition 2021 ${src}/src/main.rs && touch $out
+        fmt = pkgs.runCommand "to-pdf-fmt" { nativeBuildInputs = [ pkgs.cargo pkgs.rustfmt ]; } ''
+          cargo fmt --check --manifest-path ${src}/Cargo.toml && touch $out
+        '';
+        # the static binary must stay light: fails if it grows past the ceiling (measured size + 10%)
+        size = pkgs.runCommand "to-pdf-size" { } ''
+          size=$(stat -L -c %s ${self.packages.${pkgs.stdenv.hostPlatform.system}.to-pdf}/bin/to-pdf)
+          echo "to-pdf: $size bytes, ceiling ${toString sizeCeiling}"
+          [ "$size" -le ${toString sizeCeiling} ] || { echo "to-pdf grew past its ceiling" >&2; exit 1; }
+          touch $out
         '';
         smoke = self.packages.${pkgs.stdenv.hostPlatform.system}.smoke;
       });

@@ -1,0 +1,5 @@
+---
+source: src/main.rs
+expression: "to_typst(\"a # b $ c @ d * e _ f [ g ] h < i > j\")"
+---
+a \# b \$ c \@ d \* e \_ f \[ g \] h \< i \> j

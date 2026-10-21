@@ -227,9 +227,16 @@ just smoke-docx       # the same sample as .docx, the optional non-TeX output (C
 ## ptbr-pdf
 
 Markdown → PDF for Portuguese text and nothing else: one Rust binary, `to-pdf`, with Typst as a
-library and the fonts inside it. 93.6 MiB closure (46.6 MiB binary; 46.7 MiB static musl build)
-against publisher's 3.2 GiB. First consumer: the `.pdf` output of
-[ptbr-writter](https://github.com/h0ffmann/ptbr-writter). See [`labs/ptbr-pdf`](labs/ptbr-pdf).
+library and six fonts inside it. First consumer: the `.pdf` output of
+[ptbr-writer](https://github.com/h0ffmann/ptbr-writer). See [`labs/ptbr-pdf`](labs/ptbr-pdf).
+
+| | on disk | download |
+| :- | -: | -: |
+| before: pandoc + XeLaTeX | 729 MiB | 206 MiB |
+| **now: Rust + Typst, static** | **25.2 MiB** | **8.1 MiB** (`xz -9`) |
+
+29× less on disk, 25× less to download; one page converts in 0.2 s. The full benchmark and the
+platforms are in [`labs/ptbr-pdf`](labs/ptbr-pdf#benchmark-from-pandoc-to-rust).
 
 ```console
 nix run github:h0ffmann/picasso?dir=labs/ptbr-pdf -- texto.md
@@ -810,6 +817,7 @@ from the next release. What is not mine, and under which terms:
 | The Marola and Ouroboric logos on the site | [marola-dev](https://github.com/marola-dev/marola) and [ouroboric-dev](https://github.com/ouroboric-dev/ouroboric) | trademarks of their projects, loaded from their own repositories to identify them, never copied here |
 | The quote on slide 2 of [docs/social/instagram_001/](docs/social/instagram_001/) | Fabio Akita, [akitaonrails.com](https://www.akitaonrails.com/en/2026/09/19/new-ai-language-just-released-bend-2/) | one sentence, quoted with credit and a link; not under this repo's licence |
 | Fonts on the site (Fjalla One, Inter, JetBrains Mono) | their designers, served by Google Fonts | SIL Open Font License |
+| Fonts inside the `to-pdf` binary ([`labs/ptbr-pdf/fonts/`](labs/ptbr-pdf/fonts)): Libertinus Serif, DejaVu Sans Mono | The Libertinus Project Authors; Bitstream, Inc. and the DejaVu contributors, copied from the typst-assets crate | SIL OFL 1.1 and the Bitstream Vera / DejaVu licence; texts in [`LICENSES/`](LICENSES) |
 | The site's bundled JavaScript dependencies ([`site/manifest.toml`](site/manifest.toml)) | [Lustre](https://github.com/lustre-labs/lustre); the Gleam standard library, gleam_json, gleam_regexp and their dependencies | Lustre MIT, the rest Apache-2.0; compiled into the published `app.js`, not vendored here |
 
 The drawings in [`site/static/drawings/`](site/static/drawings) are original works made for this repository,

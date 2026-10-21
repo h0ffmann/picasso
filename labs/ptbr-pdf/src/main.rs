@@ -4,7 +4,17 @@ use std::{fmt::Write as _, path::PathBuf, process::ExitCode};
 use typst_as_lib::TypstEngine;
 use typst_layout::PagedDocument;
 
-const PREAMBLE: &str = r##"#set text(lang: "pt", region: "br")
+/// Only the body and code faces ptbr-writter needs; ⚠ (U+26A0) comes from DejaVu Sans Mono.
+const FONTS: [&[u8]; 6] = [
+    include_bytes!("../fonts/LibertinusSerif-Regular.otf"),
+    include_bytes!("../fonts/LibertinusSerif-Bold.otf"),
+    include_bytes!("../fonts/LibertinusSerif-Italic.otf"),
+    include_bytes!("../fonts/LibertinusSerif-BoldItalic.otf"),
+    include_bytes!("../fonts/DejaVuSansMono.ttf"),
+    include_bytes!("../fonts/DejaVuSansMono-Bold.ttf"),
+];
+
+const PREAMBLE: &str = r##"#set text(font: "Libertinus Serif", lang: "pt", region: "br")
 #set page(margin: 2.5cm)
 #set table(stroke: 0.5pt + luma(150), inset: 6pt)
 #show link: set text(fill: rgb("#1a5fb4"))
@@ -221,10 +231,7 @@ pub fn to_typst(md: &str) -> String {
 /// Markdown to PDF bytes. Fonts are embedded (typst-assets) and nothing touches the network.
 pub fn to_pdf(md: &str) -> Result<Vec<u8>, String> {
     let src = format!("{PREAMBLE}\n{}", to_typst(md));
-    let engine = TypstEngine::builder()
-        .main_file(src)
-        .fonts(typst_assets::fonts())
-        .build();
+    let engine = TypstEngine::builder().main_file(src).fonts(FONTS).build();
     let doc: PagedDocument = engine.compile().output.map_err(|e| format!("typst: {e}"))?;
     typst_pdf::pdf(&doc, &Default::default()).map_err(|e| format!("pdf: {e:?}"))
 }
@@ -347,6 +354,39 @@ mod tests {
                 format!("#raw(block: true, lang: \"{to}\", \"x\")\n\n")
             );
         }
+    }
+
+    #[test]
+    fn snapshots() {
+        use insta::assert_snapshot as snap;
+        snap!(
+            "accents",
+            to_typst("# Ação e coração\n\nÀ vista, pão, é, ü — “aspas”.")
+        );
+        snap!("warning", to_typst("Reinicie o serviço ⚠ agora."));
+        snap!(
+            "escaping",
+            to_typst("a # b $ c @ d * e _ f [ g ] h < i > j")
+        );
+        snap!(
+            "table",
+            to_typst("| Passo | Prazo |\n|:--|--:|\n| ler | 2 min |")
+        );
+        for (lang, src) in [
+            ("json", "{\"a\": 1}"),
+            ("python", "print(\"#x\")"),
+            ("sql", "SELECT 1;"),
+            ("rust", "fn main() {}"),
+            ("scala", "object A"),
+        ] {
+            insta::with_settings!({snapshot_suffix => lang}, {
+                snap!("code", to_typst(&format!("```{lang}\n{src}\n```")));
+            });
+        }
+        snap!(
+            "nested",
+            to_typst("1. a\n   - b\n   - c\n2. d\n\n> q [x](https://a.b)")
+        );
     }
 
     #[test]

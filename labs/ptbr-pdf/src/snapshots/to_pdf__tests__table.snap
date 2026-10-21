@@ -1,0 +1,5 @@
+---
+source: src/main.rs
+expression: "to_typst(\"| Passo | Prazo |\\n|:--|--:|\\n| ler | 2 min |\")"
+---
+#table(columns: 2, align: (left, right,), table.header([Passo], [Prazo]), [ler], [2 min])

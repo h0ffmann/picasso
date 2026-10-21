@@ -1,0 +1,11 @@
+---
+source: src/main.rs
+expression: "to_typst(\"1. a\\n   - b\\n   - c\\n2. d\\n\\n> q [x](https://a.b)\")"
+---
+#enum(start: 1, [a#list([b], [c])
+
+], [d])
+
+#quote(block: true)[q #link("https://a.b")[x]
+
+]
