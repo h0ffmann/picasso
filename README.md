@@ -81,6 +81,7 @@ Each lab README has the recipes, what the lab pins (`What it pins`) and how to r
 | [`cuda`](labs/cuda) | nixos-cuda binary cache setup, torch venv with the driver libraries (x86_64-linux only) | `just cache-setup`, `just venv <requirements>` |
 | [`present`](labs/present) | Screen annotation, capture and recording, webcam `cam` profiles, pdfpc, presenterm | `just annotate`, `just cam save <name>` |
 | [`viz`](labs/viz) | The code graph of a repository with graphify: code-only, keyless, offline | `just graph build` |
+| [`code-graph`](labs/code-graph) | The same code graph in one Rust binary, no Python: graphify's `graph.json` plus an interactive `graph.html`; 15.9 MiB static against 579.7 MiB for graphify | `just graph` |
 
 `ptbr-pdf` is small on purpose. For the same job, pandoc + XeLaTeX needs 729 MiB on disk (206 MiB
 to download); Rust + Typst, static, needs 25.2 MiB (8.1 MiB with `xz -9`). The method and the

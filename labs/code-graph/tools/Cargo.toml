@@ -1,0 +1,26 @@
+[package]
+name = "code-graph"
+version = "0.1.0"
+edition = "2021"
+description = "code-graph: the code-only graph of a repository, written as graphify's graph.json, in one Rust binary"
+license = "AGPL-3.0-only"
+publish = false
+
+[dependencies]
+serde_json = "1"
+tree-sitter = "0.27"
+tree-sitter-fortran = "0.6"
+tree-sitter-gleam = "1"
+tree-sitter-javascript = "0.25"
+tree-sitter-nix = "0.3"
+tree-sitter-python = "0.25"
+tree-sitter-rust = "0.24"
+tree-sitter-scala = "0.26"
+tree-sitter-typescript = "0.23"
+
+[profile.release]
+strip = true
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"

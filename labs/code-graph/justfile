@@ -1,0 +1,46 @@
+# code-graph — the code graph of a repository, in one Rust binary. `just` lists recipes.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+set positional-arguments
+here := justfile_directory()
+
+default:
+    @just --list
+
+# Build the binary (packages.default) and print its path.
+build:
+    nix build "{{here}}" --no-link --print-out-paths
+
+# The graph of the directory you call it from: graph.json, GRAPH_REPORT.md and graph.html go to
+# ~/.cache/code-graph/<directory name> (or --out DIR). Other commands: query "<q>" | path A B | explain X.
+[no-cd]
+graph *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "${1:-extract}" in
+      extract|update)
+        shift || true
+        out="${XDG_CACHE_HOME:-$HOME/.cache}/code-graph/$(basename "$PWD")"
+        nix run "{{here}}" -- extract "${1:-.}" --out "$out" "${@:2}"
+        echo "open $out/graph.html" ;;
+      query|path|explain)
+        cmd="$1"; shift
+        nix run "{{here}}" -- "$cmd" "$@" --graph "${XDG_CACHE_HOME:-$HOME/.cache}/code-graph/$(basename "$PWD")/graph.json" ;;
+      *) nix run "{{here}}" -- "$@" ;;
+    esac
+
+# cargo test in the dev shell (CI builds the same tests as the code-graph flake check).
+test:
+    cd "{{here}}/tools" && nix develop "{{here}}" -c cargo test
+
+# Enter the shell: rustc, cargo, clippy, rustfmt and rust-analyzer on PATH.
+shell:
+    nix develop "{{here}}"
+
+# Graph example/ in the Nix sandbox and query it (what CI builds).
+smoke:
+    nix build "{{here}}#smoke" --print-build-logs --out-link "{{here}}/result-smoke" && cat "{{here}}/result-smoke/query.txt"
+
+# Size of the binary, of the static binary and of the closure a consumer downloads.
+size:
+    nix path-info -Sh "$(nix build "{{here}}#default" --no-link --print-out-paths)" "$(nix build "{{here}}#static" --no-link --print-out-paths)"
+    stat -L -c '%s bytes %n' "$(nix build "{{here}}#default" --no-link --print-out-paths)/bin/code-graph"
