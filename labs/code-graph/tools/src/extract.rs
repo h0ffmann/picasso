@@ -221,7 +221,7 @@ impl Cx<'_> {
     }
 }
 
-fn collect(dir: &Path, rel: &str, out: &mut Vec<String>) {
+fn collect(dir: &Path, rel: &str, skip: &[String], out: &mut Vec<String>) {
     let Ok(rd) = std::fs::read_dir(dir) else {
         return;
     };
@@ -236,11 +236,14 @@ fn collect(dir: &Path, rel: &str, out: &mut Vec<String>) {
             format!("{rel}/{name}")
         };
         if ft.is_dir() {
+            // a directory with its own .git (file or directory) is another repository
             if !name.starts_with('.')
                 && !SKIP_DIRS.contains(&name.as_str())
                 && !name.starts_with("result-")
+                && !skip.contains(&path)
+                && !e.path().join(".git").exists()
             {
-                collect(&e.path(), &path, out);
+                collect(&e.path(), &path, skip, out);
             }
         } else if ft.is_file()
             && Lang::of_path(&name).is_some()
@@ -377,9 +380,10 @@ impl Resolver<'_> {
     }
 }
 
-pub fn extract(root: &Path) -> Graph {
+pub fn extract(root: &Path, exclude: &[String]) -> Graph {
     let mut paths = Vec::new();
-    collect(root, "", &mut paths);
+    let skip: Vec<String> = exclude.iter().map(|x| normalize(x)).collect();
+    collect(root, "", &skip, &mut paths);
     let mut syms: Vec<Sym> = Vec::new();
     let mut ids: HashMap<String, usize> = HashMap::new();
     let mut edges: Vec<PEdge> = Vec::new();

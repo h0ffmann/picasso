@@ -188,3 +188,46 @@ fn reads_graphifys_own_graph_json() {
         .unwrap()
         .contains("a() --calls [EXTRACTED]--> b()"));
 }
+
+#[test]
+fn nested_repositories_and_excluded_paths_are_skipped() {
+    let d = scratch("skip");
+    let w = |p: &str, s: &str| {
+        let f = d.join(p);
+        std::fs::create_dir_all(f.parent().unwrap()).unwrap();
+        std::fs::write(f, s).unwrap();
+    };
+    w("own.py", "def own(): pass\n");
+    w("sub/.git", "gitdir: ../.git/modules/sub\n"); // a submodule has a .git file
+    w("sub/theirs.py", "def theirs(): pass\n");
+    w("nested/.git/HEAD", "ref: refs/heads/main\n"); // a nested repository has a .git directory
+    w("nested/theirs2.py", "def theirs2(): pass\n");
+    w("extra/lib.py", "def vend(): pass\n");
+    let ids = |g: &Value| -> Vec<String> {
+        g["nodes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|n| n["id"].as_str().unwrap().to_string())
+            .collect()
+    };
+    let g = extract(&d, &d.join("o1"));
+    let all = ids(&g);
+    assert!(all.contains(&"own_own".to_string()) && all.contains(&"extra_lib".to_string()));
+    assert!(!all
+        .iter()
+        .any(|i| i.starts_with("sub") || i.starts_with("nested")));
+    let st = bin()
+        .arg("extract")
+        .arg(&d)
+        .args(["--exclude", "extra/", "--title", "My page", "--out"])
+        .arg(d.join("o2"))
+        .status()
+        .unwrap();
+    assert!(st.success());
+    let g: Value =
+        serde_json::from_str(&std::fs::read_to_string(d.join("o2/graph.json")).unwrap()).unwrap();
+    assert!(!ids(&g).iter().any(|i| i.starts_with("extra")));
+    let h = std::fs::read_to_string(d.join("o2/graph.html")).unwrap();
+    assert!(h.contains("<title>My page</title>") && h.contains("<h1>My page</h1>"));
+}

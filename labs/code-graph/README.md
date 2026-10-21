@@ -19,7 +19,7 @@ just smoke                   # graph example/ in the Nix sandbox (what CI builds
 just size                    # binary, static binary and closure
 ```
 
-Commands of the binary: `extract DIR [--out OUT] [--no-viz]`, `update DIR` (the same, nothing is
+Commands of the binary: `extract DIR [--out OUT] [--no-viz] [--exclude PATH]... [--title TEXT]`, `update DIR` (the same, nothing is
 cached), `cluster-only DIR`, `html [--graph F] [--out F]`, `query "Q" [--budget N] [--depth N]`,
 `path A B`, `explain X`. `--code-only` and `--no-label` are accepted and ignored, so a graphify
 command line still works. The name is `code-graph` and not `graphify`: the binary is compatible with
@@ -65,7 +65,10 @@ Dependencies: `tree-sitter`, the eight grammar crates above and `serde_json`. No
   written `receiver.name()` is never guessed across files: `x.join()` is mostly a std method.
   A name with two possible targets gets no edge. The tree walk skips hidden directories, `target`,
   `node_modules`, `graphify-out`, `result*`, `dist`, `build`, `_build`, `vendor` and
-  `__pycache__`, and files over 2 MiB. It does not read `.gitignore`.
+  `__pycache__`, and files over 2 MiB. It does not read `.gitignore`. It also skips any directory below
+  DIR that has its own `.git` (file or directory): a submodule or a nested repository is another
+  repository. `--exclude PATH` (repeatable, relative to DIR) skips one more path, for example
+  `--exclude docs/generated`. `--title TEXT` names the page (default: the directory name).
 - **Cluster.** Louvain modularity, one deterministic pass order (nodes sorted by id, a tie goes to the
   lowest community). Community 0 is the largest. A community's name is its best-connected node.
   ⚠ This is not graphify's Leiden, and no check shows that the partitions are equal. They are not

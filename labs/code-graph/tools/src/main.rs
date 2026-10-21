@@ -12,13 +12,16 @@ use std::process::ExitCode;
 const USAGE: &str = "code-graph: the code graph of a repository, in graphify's graph.json schema
 
 usage:
-  code-graph extract DIR [--out OUTDIR] [--no-viz]   parse DIR, write graph.json, GRAPH_REPORT.md, graph.html
+  code-graph extract DIR [--out OUTDIR] [--no-viz] [--exclude PATH]... [--title TEXT]
+                                                     parse DIR, write graph.json, GRAPH_REPORT.md, graph.html
   code-graph update DIR [--out OUTDIR] [--no-viz]    same as extract (nothing is cached)
   code-graph cluster-only DIR [--graph FILE]         cluster an existing graph.json again
-  code-graph html [--graph FILE] [--out FILE]        draw graph.html from a graph.json
+  code-graph html [--graph FILE] [--out FILE] [--title TEXT]        draw graph.html from a graph.json
   code-graph query \"QUESTION\" [--budget N] [--depth N] [--graph FILE]
   code-graph path A B [--graph FILE]
   code-graph explain X [--graph FILE]
+A directory below DIR that has its own .git (a submodule, a nested repository) is skipped.
+--exclude PATH skips one more path, relative to DIR; repeat it. --title names the page (default: the directory name).
 (--code-only and --no-label are accepted and ignored: this tool only does code, with no model)
 Default OUTDIR and graph: graphify-out/ (graph.json).
 ";
@@ -30,6 +33,8 @@ struct Args {
     budget: usize,
     depth: usize,
     viz: bool,
+    exclude: Vec<String>,
+    title: Option<String>,
 }
 
 fn parse(v: Vec<String>) -> Result<Args, String> {
@@ -40,6 +45,8 @@ fn parse(v: Vec<String>) -> Result<Args, String> {
         budget: 2000,
         depth: 2,
         viz: true,
+        exclude: vec![],
+        title: None,
     };
     let mut it = v.into_iter();
     while let Some(x) = it.next() {
@@ -58,6 +65,8 @@ fn parse(v: Vec<String>) -> Result<Args, String> {
                     .map_err(|_| "--depth needs a number")?
             }
             "--no-viz" => a.viz = false,
+            "--exclude" => a.exclude.push(val("--exclude")?),
+            "--title" => a.title = Some(val("--title")?),
             "--code-only" | "--no-label" => {}
             _ => a.pos.push(x),
         }
@@ -192,11 +201,11 @@ fn run() -> Result<(), String> {
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_else(|| "graph".into());
-            let g = extract::extract(&canon);
+            let g = extract::extract(&canon, &a.exclude);
             emit(
                 &g,
                 &a.out.clone().unwrap_or_else(|| root.join("graphify-out")),
-                &name,
+                a.title.as_deref().unwrap_or(&name),
                 a.viz,
             )
         }
@@ -208,13 +217,18 @@ fn run() -> Result<(), String> {
                 .unwrap_or_else(|| root.join("graphify-out/graph.json"));
             let mut g = load(&p)?;
             g.cluster();
-            emit(&g, p.parent().unwrap_or(Path::new(".")), "graph", a.viz)
+            emit(
+                &g,
+                p.parent().unwrap_or(Path::new(".")),
+                a.title.as_deref().unwrap_or("graph"),
+                a.viz,
+            )
         }
         "html" => {
             let g = load(&gpath)?;
             write(
                 &a.out.clone().unwrap_or_else(|| "graph.html".into()),
-                &html::render(&g, "graph"),
+                &html::render(&g, a.title.as_deref().unwrap_or("graph")),
             )
         }
         "query" => {

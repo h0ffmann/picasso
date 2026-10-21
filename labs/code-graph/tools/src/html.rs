@@ -235,9 +235,9 @@ h1{font-size:16px;margin:0}h2{font-size:12px;text-transform:uppercase;letter-spa
 header span{color:var(--mut);margin-left:auto}
 input,button{font:inherit;color:inherit;background:var(--pan);border:1px solid var(--line);border-radius:6px;padding:4px 8px}input{min-width:220px}
 main{flex:1;display:flex;min-height:0}svg{flex:1;min-width:0;cursor:grab;touch-action:none}
-aside{width:300px;overflow:auto;padding:12px 16px;border-left:1px solid var(--line);background:var(--pan)}
+aside{width:300px;overflow-y:auto;overflow-x:hidden;padding:12px 16px;border-left:1px solid var(--line);background:var(--pan)}
 #info .t{font-weight:600;word-break:break-all}#info div{overflow-wrap:anywhere}
-ul{list-style:none;margin:0;padding:0}#legend li{display:flex;gap:8px;align-items:center;padding:2px 0;cursor:pointer}#legend li:hover{text-decoration:underline}#legend b{margin-left:auto;color:var(--mut);font-weight:400}
+ul{list-style:none;margin:0;padding:0}#legend li{display:flex;gap:8px;align-items:center;padding:2px 0;cursor:pointer}#legend li:hover{text-decoration:underline}#legend span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#legend b{margin-left:auto;color:var(--mut);font-weight:400}
 .rels li{display:flex;gap:8px;align-items:center;color:var(--mut)}
 i.s0,.c0{fill:var(--c0);background:var(--c0)}i.s1,.c1{fill:var(--c1);background:var(--c1)}i.s2,.c2{fill:var(--c2);background:var(--c2)}i.s3,.c3{fill:var(--c3);background:var(--c3)}
 i.s4,.c4{fill:var(--c4);background:var(--c4)}i.s5,.c5{fill:var(--c5);background:var(--c5)}i.s6,.c6{fill:var(--c6);background:var(--c6)}i.s7,.c7{fill:var(--c7);background:var(--c7)}
