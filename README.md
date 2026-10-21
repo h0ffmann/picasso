@@ -58,6 +58,7 @@ redirects it, and the repositories marked so still write it.
 | [h0ffmann/ptbr-writer](https://github.com/h0ffmann/ptbr-writer) | `gleam-website` | flake input `github:h0ffmann/picasso?dir=labs/gleam-website` | [`flake.nix`](https://github.com/h0ffmann/ptbr-writer/blob/main/flake.nix) | `4bd3b22` |
 | | `gleam-website` (the site's sources) | git submodule `forks/picasso`; `just pins` fails when it differs from the lock; ⚠ sparse not checked | [`.gitmodules`](https://github.com/h0ffmann/ptbr-writer/blob/main/.gitmodules) | `4bd3b22` |
 | | `ptbr-pdf` | `nix run "github:h0ffmann/picasso/$PICASSO_REV?dir=labs/ptbr-pdf"` for the plugin's `.pdf` output; ⚠ on the open pull request h0ffmann/ptbr-writer#29 | `plugins/ptbr-writer/scripts/to-pdf.sh` | `53372f0` |
+| | `ptbr-tools` | `nix build "github:h0ffmann/picasso/$PICASSO_REV?dir=labs/ptbr-tools#static"` for the plugin's hook, reading-time and router binaries; ⚠ pending ptbr-writer pull request | none yet | none yet |
 
 Labs with no consumer found: `present` (the workstation only). `pratico`, `cuda` and `agentic` are
 also used on this workstation. marola does not take `cuda` as an input today. Private repositories
@@ -72,6 +73,7 @@ Each lab README has the recipes, what the lab pins (`What it pins`) and how to r
 | [`pratico`](labs/pratico) | WAVEWATCH III toolchain (gfortran, OpenMPI, NetCDF), Kokkos, zsh-ai pilot, ai-jail recipes | `just ww3`, `just smoke` |
 | [`publisher`](labs/publisher) | pandoc + TeX Live; `mkPdf` and `mkDocx`; an Action that builds and commits PDFs | `just shell`, `lib.<system>.mkPdf`, Action |
 | [`ptbr-pdf`](labs/ptbr-pdf) | Markdown to PDF for Portuguese: one Rust binary, `to-pdf`, Typst as a library, six fonts inside | `nix run github:h0ffmann/picasso?dir=labs/ptbr-pdf -- texto.md` |
+| [`ptbr-tools`](labs/ptbr-tools) | The ptbr-writer plugin's runtime scripts (hook, reading time, router) as one static Rust binary, 0.54 MiB, std only | `nix build github:h0ffmann/picasso?dir=labs/ptbr-tools#static` |
 | [`lint`](labs/lint) | hadolint, actionlint, shellcheck, ruff, pyflakes, cloc, coverage.py, pdoc as one list | `lib.<system>.tools` in your `mkShell` |
 | [`paper`](labs/paper) | Markdown papers to PDF and arXiv source: pandoc-crossref, XeLaTeX, pdfLaTeX | `just shell`, `just smoke` |
 | [`gleam-website`](labs/gleam-website) | Gleam (JavaScript target), node, esbuild, just: the toolchain of this repo's site | `just shell`, `just smoke` |

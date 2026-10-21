@@ -42,8 +42,8 @@ jobs:
       fail-fast: false
       matrix:
         lab: ${{ fromJSON(github.event_name == 'workflow_dispatch'
-          && '["pratico", "publisher", "ptbr-pdf", "lint", "paper", "gleam-website", "agentic", "cuda", "present", "viz"]'
-          || '["pratico", "publisher", "lint", "paper", "gleam-website", "agentic", "cuda", "present", "viz"]') }}
+          && '["pratico", "publisher", "ptbr-pdf", "ptbr-tools", "lint", "paper", "gleam-website", "agentic", "cuda", "present", "viz"]'
+          || '["pratico", "publisher", "ptbr-tools", "lint", "paper", "gleam-website", "agentic", "cuda", "present", "viz"]') }}
     defaults:
       run:
         working-directory: labs/${{ matrix.lab }}

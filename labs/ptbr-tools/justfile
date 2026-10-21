@@ -1,0 +1,23 @@
+# ptbr-tools — the ptbr-writer plugin's runtime scripts as static Rust binaries. `just` lists recipes.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+set positional-arguments
+here := justfile_directory()
+
+default:
+    @just --list
+
+# cargo test in the dev shell (the self-tests of the three scripts, the TOML and JSON readers).
+test:
+    cd "{{here}}" && nix develop "{{here}}" -c cargo test
+
+# Build the static binary (musl) and list it with its three command names.
+build:
+    nix build "{{here}}#static" --print-build-logs --out-link "{{here}}/result" && ls -lL "{{here}}/result/bin/"
+
+# The size of the static binary, its xz size and the closure a consumer downloads.
+size:
+    p="$(nix build "{{here}}#static" --no-link --print-out-paths)"; stat -L -c '%s bytes %n' "$p/bin/ptbr"; xz -9 -c "$p/bin/ptbr" | wc -c; nix path-info -Sh "$p"
+
+# Enter the shell: rustc, cargo, clippy, rustfmt and rust-analyzer on PATH.
+shell:
+    nix develop "{{here}}"
