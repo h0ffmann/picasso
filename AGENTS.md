@@ -300,6 +300,8 @@ An issue never has the two labels.
 
 ## Commits and PRs
 
+**Hard rule: English.** Commit messages, PR titles and bodies, issues and review comments in this repository are in English, even when the request or a consumer repository is in Portuguese.
+
 Commit subject in the `<type>(<lab>): ...` shape the log already uses — `feat(cuda): ...`,
 `docs: ...`, `ci: ...` — with a body that carries the reasoning, then exactly these trailers:
 
