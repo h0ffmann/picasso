@@ -11,7 +11,7 @@ const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: p
 const page = await browser.newPage();
 await page.goto(pathToFileURL(path.join(here, 'whitepaper.html')).href, { waitUntil: 'networkidle' });
 await page.evaluate(() => document.fonts.ready);
-// doi.txt is written by `zenodo.py draft` once Zenodo has reserved the DOI.
+// doi.txt is written by `zenodo draft` once Zenodo has reserved the DOI.
 const doiFile = path.join(here, 'doi.txt');
 if (existsSync(doiFile)) {
   const doi = readFileSync(doiFile, 'utf8').trim();

@@ -28,7 +28,8 @@ jobs:
         run: |
           [[ "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main
-      - run: python3 scripts/citation.py --check
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - run: nix run ./tools#citation -- --check
       - env:
           GH_TOKEN: ${{ github.token }}
         run: |
