@@ -1,0 +1,10 @@
+[package]
+name = "viz"
+version = "0.1.0"
+edition = "2021"
+description = "viz: the code graph of a repository with graphify, code-only, keyless, offline"
+license = "AGPL-3.0-only"
+publish = false
+
+[profile.release]
+strip = true

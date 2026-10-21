@@ -13,8 +13,8 @@ just graph build            # graph the directory you are in; prints the path of
 just graph update           # the same graph, with the Markdown pages, headings and links
 just graph query "<q>"      # answer from the graph, capped at --budget 400
 just graph path <a> <b>     # also explain <x>, or any other graphify command, on the same graph
-just self-test              # viz --self-test, from source (CI)
-just smoke                  # example/ graphed and queried in the Nix sandbox (CI)
+just self-test              # viz's cargo tests (CI builds them as the viz check)
+just smoke                  # example/ (two Rust files, one calling the other) graphed and queried in the sandbox (CI)
 ```
 
 | Command | Does |
