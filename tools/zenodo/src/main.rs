@@ -3,7 +3,7 @@
 //! Run from docs/whitepapers/determinism-2026 (paths are relative to the current directory):
 //!
 //!   ZENODO_TOKEN=... zenodo draft     # create the draft from zenodo.json, reserve a DOI into doi.txt
-//!   node render.mjs                   # re-render: the cover's "Cite as" now carries the DOI
+//!   just render paper                   # re-render: the cover's "Cite as" now carries the DOI
 //!   ZENODO_TOKEN=... zenodo upload    # attach ../../../PICASSOPAPER.pdf to the draft
 //!   zenodo --self-test                # checks zenodo.json and the files, no network
 //!
@@ -91,7 +91,7 @@ fn check() -> Result<Value, String> {
         return Err("zenodo.json: references out of step with the paper".into());
     }
     if !Path::new(PDF).exists() {
-        return Err("PICASSOPAPER.pdf missing: run node render.mjs".into());
+        return Err("PICASSOPAPER.pdf missing: run just render paper".into());
     }
     Ok(m)
 }
@@ -136,7 +136,7 @@ fn run(args: &[String]) -> Result<(), String> {
             .ok_or("no reserved DOI in the response")?;
         std::fs::write(DOI, format!("{doi}\n")).map_err(|e| e.to_string())?;
         println!(
-            "draft {id}: {}\nreserved DOI {doi}; now run: node render.mjs",
+            "draft {id}: {}\nreserved DOI {doi}; now run: just render paper",
             d["links"]["html"].as_str().unwrap_or("")
         );
     } else if args.iter().any(|a| a == "upload") {

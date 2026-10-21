@@ -103,7 +103,7 @@ fn print(html: &Path, out: &Path, o: &Opts) -> R<()> {
         };
         eval(&mut c, "document.fonts.ready.then(() => 0)")?;
         if let Some(f) = &o.doi {
-            // doi.txt is written by `zenodo.py draft` once Zenodo has reserved the DOI.
+            // doi.txt is written by `zenodo draft` once Zenodo has reserved the DOI.
             if let Ok(d) = std::fs::read_to_string(f) {
                 let e = format!(
                     "document.querySelector('[data-doi]').textContent = {}",
