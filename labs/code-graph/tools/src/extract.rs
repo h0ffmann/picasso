@@ -221,7 +221,7 @@ impl Cx<'_> {
     }
 }
 
-fn collect(dir: &Path, rel: &str, skip: &[String], out: &mut Vec<String>) {
+fn collect(dir: &Path, rel: &str, skip: &[String], keep: fn(&str) -> bool, out: &mut Vec<String>) {
     let Ok(rd) = std::fs::read_dir(dir) else {
         return;
     };
@@ -243,10 +243,10 @@ fn collect(dir: &Path, rel: &str, skip: &[String], out: &mut Vec<String>) {
                 && !skip.contains(&path)
                 && !e.path().join(".git").exists()
             {
-                collect(&e.path(), &path, skip, out);
+                collect(&e.path(), &path, skip, keep, out);
             }
         } else if ft.is_file()
-            && Lang::of_path(&name).is_some()
+            && keep(&name)
             && e.metadata().map(|m| m.len() <= MAX_BYTES).unwrap_or(false)
         {
             out.push(path);
@@ -380,10 +380,31 @@ impl Resolver<'_> {
     }
 }
 
+/// The files `--link` reads for references: code, plus the text files that name other repositories.
+pub fn text_files(root: &Path, exclude: &[String]) -> Vec<String> {
+    let mut paths = Vec::new();
+    let skip: Vec<String> = exclude.iter().map(|x| normalize(x)).collect();
+    collect(
+        root,
+        "",
+        &skip,
+        |n| {
+            Lang::of_path(n).is_some()
+                || n == "justfile"
+                || matches!(
+                    n.rsplit('.').next(),
+                    Some("sh" | "md" | "toml" | "lock" | "yml" | "yaml")
+                )
+        },
+        &mut paths,
+    );
+    paths
+}
+
 pub fn extract(root: &Path, exclude: &[String]) -> Graph {
     let mut paths = Vec::new();
     let skip: Vec<String> = exclude.iter().map(|x| normalize(x)).collect();
-    collect(root, "", &skip, &mut paths);
+    collect(root, "", &skip, |n| Lang::of_path(n).is_some(), &mut paths);
     let mut syms: Vec<Sym> = Vec::new();
     let mut ids: HashMap<String, usize> = HashMap::new();
     let mut edges: Vec<PEdge> = Vec::new();

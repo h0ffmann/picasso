@@ -11,6 +11,10 @@ pub struct Node {
     pub external: bool,
     pub community: usize,
     pub cname: String,
+    /// the short name of the linked repository this node stands for (`--link`), else empty
+    pub repo: String,
+    /// where that repository's graph.html is, focused on the node (`--link`), else empty
+    pub href: String,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -56,8 +60,17 @@ impl Graph {
                 m.insert("community".into(), json!(n.community));
                 m.insert("community_name".into(), json!(n.cname));
                 if n.external {
-                    m.insert("external".into(), json!(true));
+                    // a node of a linked repository carries its name, any other external `true`
+                    let v = if n.repo.is_empty() {
+                        json!(true)
+                    } else {
+                        json!(n.repo)
+                    };
+                    m.insert("external".into(), v);
                     m.insert("type".into(), json!("external"));
+                }
+                if !n.href.is_empty() {
+                    m.insert("href".into(), json!(n.href));
                 }
                 Value::Object(m)
             })
@@ -119,7 +132,17 @@ impl Graph {
                 id,
                 file: s(n, "source_file"),
                 line: ln(n),
-                external: n.get("external").and_then(Value::as_bool).unwrap_or(false),
+                external: match n.get("external") {
+                    Some(Value::String(s)) => !s.is_empty(),
+                    Some(x) => x.as_bool().unwrap_or(false),
+                    None => false,
+                },
+                repo: n
+                    .get("external")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_string(),
+                href: s(n, "href"),
                 community: n.get("community").and_then(Value::as_u64).unwrap_or(0) as usize,
                 cname,
             });

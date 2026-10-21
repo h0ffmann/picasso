@@ -3,6 +3,7 @@ mod extract;
 mod graph;
 mod html;
 mod lang;
+mod link;
 mod query;
 
 use graph::Graph;
@@ -13,6 +14,7 @@ const USAGE: &str = "code-graph: the code graph of a repository, in graphify's g
 
 usage:
   code-graph extract DIR [--out OUTDIR] [--no-viz] [--exclude PATH]... [--title TEXT]
+                         [--link NAME=PATH/graph.json[@URL]]...
                                                      parse DIR, write graph.json, GRAPH_REPORT.md, graph.html
   code-graph update DIR [--out OUTDIR] [--no-viz]    same as extract (nothing is cached)
   code-graph cluster-only DIR [--graph FILE]         cluster an existing graph.json again
@@ -22,6 +24,8 @@ usage:
   code-graph explain X [--graph FILE]
 A directory below DIR that has its own .git (a submodule, a nested repository) is skipped.
 --exclude PATH skips one more path, relative to DIR; repeat it. --title names the page (default: the directory name).
+--link NAME=GRAPH[@URL] adds the nodes of another repository's graph.json that DIR refers to (a flake
+?dir=PATH, a GitHub tree/blob URL, lab=PATH) as external nodes; clicking one opens URL (default NAME.html).
 (--code-only and --no-label are accepted and ignored: this tool only does code, with no model)
 Default OUTDIR and graph: graphify-out/ (graph.json).
 ";
@@ -35,6 +39,7 @@ struct Args {
     viz: bool,
     exclude: Vec<String>,
     title: Option<String>,
+    link: Vec<String>,
 }
 
 fn parse(v: Vec<String>) -> Result<Args, String> {
@@ -47,6 +52,7 @@ fn parse(v: Vec<String>) -> Result<Args, String> {
         viz: true,
         exclude: vec![],
         title: None,
+        link: vec![],
     };
     let mut it = v.into_iter();
     while let Some(x) = it.next() {
@@ -66,6 +72,7 @@ fn parse(v: Vec<String>) -> Result<Args, String> {
             }
             "--no-viz" => a.viz = false,
             "--exclude" => a.exclude.push(val("--exclude")?),
+            "--link" => a.link.push(val("--link")?),
             "--title" => a.title = Some(val("--title")?),
             "--code-only" | "--no-label" => {}
             _ => a.pos.push(x),
@@ -201,7 +208,24 @@ fn run() -> Result<(), String> {
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_else(|| "graph".into());
-            let g = extract::extract(&canon, &a.exclude);
+            let mut g = extract::extract(&canon, &a.exclude);
+            if !a.link.is_empty() {
+                let mut links = vec![];
+                for spec in &a.link {
+                    let (name, path, url) = link::parse_spec(spec)?;
+                    links.push(link::Link {
+                        name,
+                        graph: load(&path)?,
+                        url,
+                    });
+                }
+                let files: Vec<(String, String)> = extract::text_files(&canon, &a.exclude)
+                    .into_iter()
+                    .filter_map(|p| Some((std::fs::read_to_string(canon.join(&p)).ok()?, p)))
+                    .map(|(t, p)| (p, t))
+                    .collect();
+                link::apply(&mut g, &files, &links);
+            }
             emit(
                 &g,
                 &a.out.clone().unwrap_or_else(|| root.join("graphify-out")),

@@ -231,3 +231,149 @@ fn nested_repositories_and_excluded_paths_are_skipped() {
     let h = std::fs::read_to_string(d.join("o2/graph.html")).unwrap();
     assert!(h.contains("<title>My page</title>") && h.contains("<h1>My page</h1>"));
 }
+
+fn write_all(d: &Path, files: &[(&str, &str)]) {
+    for (p, s) in files {
+        let f = d.join(p);
+        std::fs::create_dir_all(f.parent().unwrap()).unwrap();
+        std::fs::write(f, s).unwrap();
+    }
+}
+
+fn linked(src: &Path, out: &Path, link: &str) -> Value {
+    let st = bin()
+        .arg("extract")
+        .arg(src)
+        .args(["--link", link, "--out"])
+        .arg(out)
+        .status()
+        .unwrap();
+    assert!(st.success());
+    serde_json::from_str(&std::fs::read_to_string(out.join("graph.json")).unwrap()).unwrap()
+}
+
+fn node<'a>(g: &'a Value, id: &str) -> &'a Value {
+    g["nodes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|n| n["id"] == id)
+        .unwrap_or_else(|| panic!("no node {id}"))
+}
+
+/// Repo `a` refers to repo `b` by a flake `?dir=` URL and by a `lab=` line.
+fn two_repos(name: &str) -> (PathBuf, PathBuf) {
+    let d = scratch(name);
+    let (a, b) = (d.join("a"), d.join("b"));
+    write_all(
+        &b,
+        &[
+            ("labs/x/flake.nix", "{ description = \"x\"; }\n"),
+            ("labs/x/src/lib.rs", "pub fn f() { g(); }\nfn g() {}\n"),
+            ("labs/y/main.rs", "fn main() { h(); }\nfn h() {}\n"),
+            ("labs/z/other.rs", "fn z() {}\n"),
+        ],
+    );
+    write_all(
+        &a,
+        &[
+            (
+                "flake.nix",
+                "{ inputs.b.url = \"github:o/b?dir=labs/x\"; inputs.c.url = \"github:o/c?dir=labs/z\"; }\n",
+            ),
+            ("tools.lock", "rev=1\nlab=labs/y\nlab=labs/gone\n"),
+            ("a.rs", "fn a() {}\n"),
+        ],
+    );
+    extract(&b, &d.join("b-out"));
+    (a, d.join("b-out/graph.json"))
+}
+
+#[test]
+fn link_adds_the_referenced_nodes_of_another_repository() {
+    let (a, bj) = two_repos("link");
+    let spec = format!("b={}@b.html", bj.display());
+    let out = a.parent().unwrap().join("a-out");
+    let g = linked(&a, &out, &spec);
+    let x = node(&g, "b:labs_x_flake");
+    assert_eq!(x["external"], "b");
+    assert_eq!(x["label"], "b: flake.nix");
+    assert_eq!(x["href"], "b.html#node=labs_x_flake");
+    assert_eq!(x["source_file"], "b:labs/x/flake.nix");
+    assert_eq!(x["community_name"], "b");
+    assert_eq!(node(&g, "b:labs_y_main")["community_name"], "b");
+    // the file that holds the reference is the edge's source; a lock file gets a node of its own
+    assert!(has_edge(&g, "flake", "depends_on", "b:labs_x_flake"));
+    assert!(has_edge(&g, "tools_lock", "depends_on", "b:labs_y_main"));
+    assert_eq!(node(&g, "tools_lock")["source_file"], "tools.lock");
+    let e = g["links"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["source"] == "tools_lock")
+        .unwrap();
+    assert_eq!(e["source_location"], "L2");
+    // only the referenced nodes enter: not labs/z (another repo's URL), not labs/gone, not the symbols
+    let ext: Vec<_> = g["nodes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|n| n["id"].as_str().unwrap().starts_with("b:"))
+        .collect();
+    assert_eq!(ext.len(), 2);
+    // the page: one relative link per external node, no network, no href attribute
+    let h = std::fs::read_to_string(out.join("graph.html")).unwrap();
+    assert!(h.contains("b.html#node=labs_x_flake") && h.contains("external: b"));
+    for bad in [
+        "http://", "https://", "src=", "href=", "@import", "url(", "<link",
+    ] {
+        assert!(!h.contains(bad), "graph.html contains {bad}");
+    }
+}
+
+#[test]
+fn link_output_is_deterministic_and_off_by_default() {
+    let (a, bj) = two_repos("link-det");
+    let spec = format!("b={}", bj.display());
+    let (o1, o2) = (
+        a.parent().unwrap().join("o1"),
+        a.parent().unwrap().join("o2"),
+    );
+    linked(&a, &o1, &spec);
+    linked(&a, &o2, &spec);
+    for f in ["graph.json", "graph.html", "GRAPH_REPORT.md"] {
+        assert_eq!(
+            std::fs::read(o1.join(f)).unwrap(),
+            std::fs::read(o2.join(f)).unwrap(),
+            "{f} differs between runs"
+        );
+    }
+    // the URL defaults to NAME.html
+    let g: Value =
+        serde_json::from_str(&std::fs::read_to_string(o1.join("graph.json")).unwrap()).unwrap();
+    assert_eq!(
+        node(&g, "b:labs_x_flake")["href"],
+        "b.html#node=labs_x_flake"
+    );
+    // a link to a graph that has none of the referenced paths leaves graph.json as without --link
+    let plain = a.parent().unwrap().join("plain");
+    extract(&a, &plain);
+    let none = a.parent().unwrap().join("none");
+    linked(
+        &a,
+        &none,
+        &format!("nomatch={}", plain.join("graph.json").display()),
+    );
+    assert!(
+        std::fs::read(plain.join("graph.json")).unwrap()
+            == std::fs::read(none.join("graph.json")).unwrap()
+    );
+    let st = bin()
+        .arg("extract")
+        .arg(&a)
+        .args(["--link", "b=x.json@javascript:alert(1)", "--out"])
+        .arg(a.parent().unwrap().join("bad"))
+        .status()
+        .unwrap();
+    assert!(!st.success());
+}

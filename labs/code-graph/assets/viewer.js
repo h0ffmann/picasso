@@ -50,6 +50,12 @@
     row(n[0], "t");
     row(n[1] + (n[2] ? " " + n[2] : ""));
     row("community: " + n[4]);
+    if (n[5]) {
+      var a = document.createElement("a");
+      a.setAttribute("href", n[5]);
+      a.textContent = "Open in " + n[4] + " \u2192";
+      info.appendChild(a);
+    }
     ed.slice(0, 60).forEach(function (k) {
       var e = D.e[k], out = e[0] === i, o = D.n[out ? e[1] : e[0]];
       row((out ? "→ " : "← ") + o[0] + "  [" + e[2] + "]");
@@ -113,10 +119,30 @@
     drag = null;
     if (moved > 4) return;
     var t = ev.target;
-    if (t.tagName === "circle") select(Array.prototype.indexOf.call(N, t));
-    else reset();
+    if (t.tagName === "circle") {
+      var i = Array.prototype.indexOf.call(N, t);
+      // a node of another repository: its page, focused on that node
+      if (t.classList.contains("r") && D.n[i][5]) location.assign(D.n[i][5]);
+      else select(i);
+    } else reset();
   });
   document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") { q.value = ""; reset(); } });
   document.getElementById("fit").addEventListener("click", function () { vb = D.v.slice(); view(); });
+  // #node=<id>: select that node and centre the view on it (a link from another repository's graph)
+  function focus() {
+    var m = /^#node=(.*)$/.exec(location.hash), id;
+    if (!m) return;
+    try { id = decodeURIComponent(m[1]); } catch (_) { return; }
+    for (var i = 0; i < D.n.length; i++) {
+      if (D.n[i][6] === id) {
+        var w = D.v[2] * 0.5, h = D.v[3] * 0.5;
+        vb = [+N[i].getAttribute("cx") - w / 2, +N[i].getAttribute("cy") - h / 2, w, h];
+        view();
+        return select(i);
+      }
+    }
+  }
+  window.addEventListener("hashchange", focus);
   reset();
+  focus();
 })();
