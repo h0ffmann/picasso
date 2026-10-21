@@ -135,12 +135,12 @@ skills:
 
 # ouroboric-sharingan's licence and tooling scan of local checkouts: `just sharingan-scan --into AGPL-3.0-only <dir>...`
 sharingan-scan *args:
-    python3 -I .claude/skills/ouroboric-sharingan/scripts/licence_scan.py {{ args }}
+    nix run ./tools#sharingan -- licence-scan {{ args }}
 
 
-# benchmark ouroboric-sharingan with the claude CLI: `just sharingan-bench all`, `--self-test` makes no model calls
+# benchmark ouroboric-sharingan with the claude CLI: `just sharingan-bench all`, `cargo test --manifest-path tools/sharingan/Cargo.toml` makes no model calls
 sharingan-bench *args:
-    python3 .claude/skills/ouroboric-sharingan/scripts/bench.py {{ args }}
+    nix run ./tools#sharingan -- bench {{ args }}
 
 
 # regenerate CITATION.cff from .zenodo.json (`just citation --check` to only verify)
