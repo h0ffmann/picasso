@@ -13,6 +13,8 @@ pub struct Node {
     pub cname: String,
     /// the short name of the linked repository this node stands for (`--link`), else empty
     pub repo: String,
+    /// a linked node's own label, its `label` being the PATH it was found by (`--link`)
+    pub orig: String,
     /// where that repository's graph.html is, focused on the node (`--link`), else empty
     pub href: String,
 }
@@ -68,6 +70,9 @@ impl Graph {
                     };
                     m.insert("external".into(), v);
                     m.insert("type".into(), json!("external"));
+                }
+                if !n.orig.is_empty() {
+                    m.insert("linked_label".into(), json!(n.orig));
                 }
                 if !n.href.is_empty() {
                     m.insert("href".into(), json!(n.href));
@@ -143,6 +148,7 @@ impl Graph {
                     .unwrap_or("")
                     .to_string(),
                 href: s(n, "href"),
+                orig: s(n, "linked_label"),
                 community: n.get("community").and_then(Value::as_u64).unwrap_or(0) as usize,
                 cname,
             });

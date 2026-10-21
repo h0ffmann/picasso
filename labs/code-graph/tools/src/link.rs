@@ -131,11 +131,17 @@ fn enc(s: &str) -> String {
 pub fn apply(g: &mut Graph, files: &[(String, String)], links: &[Link]) {
     // (referencing file, link, target node in the linked graph) -> first line
     let mut found: BTreeMap<(&str, usize, usize), u32> = BTreeMap::new();
+    // the first PATH, in sorted order, that resolved to each node: its label
+    let mut via: BTreeMap<(usize, usize), String> = BTreeMap::new();
     for (path, text) in files {
         for (li, l) in links.iter().enumerate() {
             for (p, line) in refs(&l.name, text) {
                 if let Some(t) = resolve(&l.graph, &p) {
                     found.entry((path.as_str(), li, t)).or_insert(line);
+                    let v = via.entry((li, t)).or_insert_with(|| p.clone());
+                    if p < *v {
+                        *v = p;
+                    }
                 }
             }
         }
@@ -178,7 +184,8 @@ pub fn apply(g: &mut Graph, files: &[(String, String)], links: &[Link]) {
             let o = &l.graph.nodes[t];
             g.nodes.push(Node {
                 id: format!("{}:{}", l.name, o.id),
-                label: format!("{}: {}", l.name, o.label),
+                label: format!("{}: {}", l.name, via[&(li, t)]),
+                orig: o.label.clone(),
                 file: format!("{}:{}", l.name, o.file),
                 line: o.line,
                 external: true,

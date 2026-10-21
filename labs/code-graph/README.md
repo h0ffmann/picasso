@@ -125,10 +125,10 @@ Measured on x86_64-linux with `nix path-info -Sh` and `stat`, nixpkgs `6510408d`
 
 | | Size |
 |---|---|
-| `packages.default` binary (glibc, stripped) | 15.8 MiB (16,591,008 bytes) |
+| `packages.default` binary (glibc, stripped) | 15.9 MiB (16,636,064 bytes) |
 | `packages.default` closure | 62.8 MiB |
-| `packages.static` (musl) binary and closure | 15.9 MiB (static, no other file) |
-| `packages.static` with `xz -9e` | 1.1 MiB (a measurement only: see the xz warning in [`ptbr-pdf`](../ptbr-pdf/README.md#benchmark-from-pandoc-to-rust)) |
+| `packages.static` (musl) binary and closure | 16.0 MiB (16,734,160 bytes; static, no other file) |
+| `packages.static` with `xz -9e` | 1.1 MiB (1,192,652 bytes) (a measurement only: see the xz warning in [`ptbr-pdf`](../ptbr-pdf/README.md#benchmark-from-pandoc-to-rust)) |
 | nixpkgs `graphify` 0.9.74, closure | 579.7 MiB |
 
 The 18.3 MB ceiling in `checks.size` is the measured binary plus 10%. Most of the size is the Scala,

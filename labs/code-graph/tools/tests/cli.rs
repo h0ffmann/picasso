@@ -297,7 +297,8 @@ fn link_adds_the_referenced_nodes_of_another_repository() {
     let g = linked(&a, &out, &spec);
     let x = node(&g, "b:labs_x_flake");
     assert_eq!(x["external"], "b");
-    assert_eq!(x["label"], "b: flake.nix");
+    assert_eq!(x["label"], "b: labs/x");
+    assert_eq!(x["linked_label"], "flake.nix");
     assert_eq!(x["href"], "b.html#node=labs_x_flake");
     assert_eq!(x["source_file"], "b:labs/x/flake.nix");
     assert_eq!(x["community_name"], "b");
@@ -324,6 +325,8 @@ fn link_adds_the_referenced_nodes_of_another_repository() {
     // the page: one relative link per external node, no network, no href attribute
     let h = std::fs::read_to_string(out.join("graph.html")).unwrap();
     assert!(h.contains("b.html#node=labs_x_flake") && h.contains("external: b"));
+    // the relations legend lists what the graph has
+    assert!(h.contains("<i class=\"l depends_on\">") && !h.contains("<i class=\"l references\">"));
     for bad in [
         "http://", "https://", "src=", "href=", "@import", "url(", "<link",
     ] {
