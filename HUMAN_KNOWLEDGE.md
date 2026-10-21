@@ -10,7 +10,7 @@ propose changes to it, but the boxes are ticked by the human.
 - [ ] **Threads gets one post every week.** The weekly post is written by hand; nothing in the
   repo posts on a schedule.
 - [x] **Every release gets a Threads post.** `release.yml` dispatches `threads.yml`, which runs
-  `scripts/social.py release <tag>` ([ADR 0001](docs/adr/0001-automatic-posts-to-threads.md)).
+  `nix run ./tools#social -- release <tag>` ([ADR 0001](docs/adr/0001-automatic-posts-to-threads.md)).
 - [x] **Every Instagram post is mirrored on Threads.** Each `docs/social/instagram_*/README.md`
   carries `status: DESIGN | REVIEW | POSTED`. When a push to `main` turns one to `POSTED` (after
   the post is live on Instagram), `threads.yml` posts the same slides, caption and alt texts.
@@ -19,7 +19,7 @@ propose changes to it, but the boxes are ticked by the human.
 ### Networks
 
 Box ticked: the network is in use. **Possible now** answers one question: can picasso as it is
-today (a public repo, GitHub Actions with repository secrets, `scripts/social.py`, personal
+today (a public repo, GitHub Actions with repository secrets, `tools/social` (Rust), personal
 accounts, no registered legal organization) post there automatically? Checked on 2026-10-12;
 "not checked" means nobody has read the official documentation yet.
 
