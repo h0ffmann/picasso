@@ -31,7 +31,12 @@ is one label per lab plus the parts of the repo outside `labs/`, and there is no
 | `area/agentic` | `#C2E0C6` | `labs/agentic`: ai-jail, OpenCode, `ocr`, `jail-run` and friends |
 | `area/cuda` | `#C2E0C6` | `labs/cuda`: CUDA cache setup and the torch venv |
 | `area/present` | `#C2E0C6` | `labs/present`: annotation, capture, webcam, presenters |
+| `area/ptbr-pdf` | `#C2E0C6` | `labs/ptbr-pdf`: `to-pdf`, Markdown to PDF with Typst |
+| `area/ptbr-tools` | `#C2E0C6` | `labs/ptbr-tools`: the `ptbr` binary that ptbr-writer ships |
+| `area/viz` | `#C2E0C6` | `labs/viz`: the visualisation toolchain |
+| `area/paper` | `#C2E0C6` | `labs/paper`: the paper and report toolchain |
 | `area/labs` | `#C2E0C6` | Every lab at once: `lab.json`, a nixpkgs bump across labs |
+| `area/tools` | `#BFD4F2` | `tools/`: the repo-wide Rust crates (`citation`, `render`, `site-check`, …) |
 | `area/system` | `#F9D0C4` | The root NixOS system, `home.nix`, `just vm`, the move back to NixOS |
 | `area/site` | `#BFDADC` | `site/`: the Gleam page, drawings, history, GitHub Pages |
 | `area/ci` | `#006B75` | `.github/workflows/`, the CI gate, Dependabot, reusable workflows |
@@ -67,6 +72,8 @@ them, never the two.
 | `de:ouroboric` | `#5277C3` | An `[A2A]` message from the ouroboric-dev project. This project ("Nix OS") answers next |
 
 ## Labels kept from before
+
+Run `just labels` to create or update every label in the tables above (`gh label create --force`, needs `gh` logged in).
 
 `dependencies` and `github_actions` stay: Dependabot adds them to its own PRs. GitHub's defaults
 (`bug`, `enhancement`, `documentation`, …) and the older `bark` and `refactor` are no longer applied;
