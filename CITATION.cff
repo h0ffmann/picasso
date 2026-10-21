@@ -2,21 +2,24 @@
 cff-version: 1.2.0
 message: "If you use picasso, please cite it using the metadata below."
 type: software
-title: "picasso: self-contained Nix flakes for scientific and agentic toolchains, and the NixOS workstation they run on"
+title: "picasso: self-contained Nix flakes that pin scientific, publishing and agentic toolchains"
 abstract: >-
-  picasso, formerly nix-config, is a set of self-contained Nix flakes, called labs, that pin the
-  toolchains a computational ocean-science and software project needs: WAVEWATCH III with
-  gfortran, OpenMPI and NetCDF (pratico), a pandoc and TeX Live publishing pipeline with its own
-  GitHub Action (publisher), a lint set (lint), a sandbox and helpers for coding agents (agentic),
-  a CUDA and PyTorch host setup (cuda), and a presenter's desk for screen annotation, capture and
-  webcam profiles (present). Each lab references nothing outside its own directory, commits its
-  lock file, and exports the same outputs, so another repository can borrow one as a flake input,
-  a sparse git submodule or a GitHub Action and get the same toolchain on any machine and in CI.
-  CI builds every lab's checks in the Nix sandbox on every push.
-
-  The same repository defines the author's NixOS workstation and a one-command virtual machine for
-  trying it from another Linux system. It is the toolchain layer under WW3 GPU Lab and marola,
-  which consume its labs.
+  picasso, formerly nix-config, is a set of self-contained Nix flakes, called labs, that pin
+  scientific, publishing and agentic toolchains for other repositories. The ten labs are:
+  WAVEWATCH III with gfortran, OpenMPI and NetCDF (pratico); a pandoc and TeX Live publishing
+  pipeline with its own GitHub Action (publisher); Markdown to PDF for Portuguese in one Rust
+  binary with Typst (ptbr-pdf); a lint set (lint); Markdown papers to PDF and arXiv source
+  (paper); a Gleam toolchain for static sites (gleam-website); a sandbox and helpers for coding
+  agents (agentic); a CUDA cache and PyTorch environment (cuda); a presenter's desk for screen
+  annotation, capture and webcam profiles (present); and a code graph of a repository (viz). Each
+  lab references nothing outside its own directory, commits its lock file and exports the same
+  outputs, so a consumer gets the same pinned toolchain on any machine and in CI: the builds are
+  deterministic, and CI builds every lab's checks in the Nix sandbox on every push. The code is
+  only Nix and Rust: the repository tools are one Rust workspace and the lab tools are Rust
+  crates. The smallest result is ptbr-pdf: the same Markdown-to-PDF job needs 729 MiB with pandoc
+  and XeLaTeX and 25.2 MiB as one static Rust and Typst binary. picasso is the toolchain layer
+  under WW3 GPU Lab, marola, ptbr-writer and other repositories, which borrow a lab as a flake
+  input, a sparse git submodule or a GitHub Action.
 authors:
   - family-names: "Hoffmann"
     given-names: "Matheus"
@@ -33,7 +36,6 @@ license: AGPL-3.0-only
 keywords:
   - "Nix"
   - "Nix flakes"
-  - "NixOS"
   - "nixpkgs"
   - "reproducible builds"
   - "reproducible research"
@@ -53,3 +55,10 @@ keywords:
   - "AI coding agents"
   - "sandboxing"
   - "research software"
+  - "Rust"
+  - "Typst"
+  - "deterministic builds"
+  - "software packaging"
+  - "software distribution"
+  - "functional package management"
+  - "supply chain"

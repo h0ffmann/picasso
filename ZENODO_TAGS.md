@@ -9,7 +9,6 @@ capitalised the way the field writes them. Keep each one tied to something the r
 |---|---|
 | Nix | every lab is a Nix flake |
 | Nix flakes | labs are consumed as flake inputs (`?dir=labs/<lab>`) |
-| NixOS | the root is the workstation's NixOS system and `just vm` |
 | nixpkgs | labs pin nixos-unstable, the root nixos-26.05 |
 | reproducible builds | committed locks; CI builds every lab with `--no-update-lock-file` |
 | reproducible research | the point of pinning a model's toolchain |
@@ -28,6 +27,13 @@ capitalised the way the field writes them. Keep each one tied to something the r
 | LaTeX | labs/publisher: TeX Live, lualatex |
 | AI coding agents | labs/agentic: OpenCode, Open Code Review, and the rules in AGENTS.md |
 | sandboxing | labs/agentic: `jail-run` runs agents in ai-jail |
+| Rust | the repository tools and every lab's tools are Rust crates |
+| Typst | labs/ptbr-pdf: Typst as a library inside `to-pdf` |
+| deterministic builds | the same inputs give the same toolchain; locks are committed |
+| software packaging | a lab packages a toolchain as a flake |
+| software distribution | other repositories borrow a lab as a flake input, a submodule or an Action |
+| functional package management | Nix, the model under every lab |
+| supply chain | pinned inputs by hash, no unpinned download in a lab |
 | research software | Zenodo's community term for archived code |
 
 Change them in `.zenodo.json`, then run `just citation` so `CITATION.cff` follows; CI's
