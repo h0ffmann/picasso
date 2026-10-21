@@ -1,3 +1,4 @@
+import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/order
@@ -12,6 +13,7 @@ import picasso_site/format
 import picasso_site/markdown
 import picasso_site/page
 import picasso_site/readiness
+import picasso_site/story
 
 pub fn main() -> Nil {
   gleeunit.main()
@@ -154,4 +156,37 @@ pub fn build_time_releases_are_prerendered_test() {
     prerendered(),
     "href=\"https://doi.org/" <> doi <> "\"",
   )
+}
+
+pub fn story_sections_are_in_order_test() {
+  let html = prerendered()
+  let ids = [
+    "what",
+    "why",
+    "users",
+    "turn",
+    "proof",
+    "labs",
+    "papers",
+    "changelog",
+    "history",
+    "standings",
+  ]
+  let positions =
+    list.map(ids, fn(id) {
+      let assert [before, ..] = string.split(html, "id=\"" <> id <> "\"")
+      string.length(before)
+    })
+  assert positions == list.sort(positions, int.compare)
+}
+
+pub fn story_numbers_come_from_the_ptbr_pdf_readme_test() {
+  let html = prerendered()
+  assert story.before.on_disk == "729 MiB"
+  assert story.after.disk_times == "29×"
+  assert story.after.download_times == "25×"
+  assert string.contains(html, "25.2 MiB")
+  assert string.contains(html, "8.1 MiB")
+  assert string.contains(html, "206 MiB")
+  assert list.length(story.consumers) == 14
 }
