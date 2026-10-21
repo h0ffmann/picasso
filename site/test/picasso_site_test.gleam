@@ -40,7 +40,8 @@ pub fn favicon_is_linked_test() {
   assert string.contains(html, "href=\"icons/apple-touch-icon.png\"")
 }
 
-const assessment = "# Readiness, 2026-10-01
+const assessment =
+  "# Readiness, 2026-10-01
 
 **Bottom line: three of five met.**
 
@@ -118,7 +119,8 @@ pub fn history_json_decodes_test() {
   assert list.length(era.commits) == 1
 }
 
-const releases_json = "{\"repo\": \"https://github.com/h0ffmann/picasso\", \"version\": \"v0.1.0\",
+const releases_json =
+  "{\"repo\": \"https://github.com/h0ffmann/picasso\", \"version\": \"v0.1.0\",
  \"doi\": \"10.5281/zenodo.8\", \"unreleased\": [{\"title\": \"Fixes\", \"entries\": [{\"subject\": \"vm: x\", \"pr\": 99, \"breaking\": false}]}],
  \"releases\": [{\"tag\": \"v0.1.0\", \"date\": \"2026-10-12\", \"previous\": null, \"doi\": \"10.5281/zenodo.9\",
    \"groups\": [{\"title\": \"Features\", \"entries\": [{\"subject\": \"site: a changelog\", \"pr\": null, \"breaking\": true}]}]}]}"
