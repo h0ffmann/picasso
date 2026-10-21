@@ -58,7 +58,7 @@ stays credited, with a link to [gvolpe/nix-config](https://github.com/gvolpe/nix
 **Hard rule: only Nix and Rust.** Code in this repository is Nix or Rust. The exceptions are the
 Gleam sites (`site/` and `labs/gleam-website`, with their JavaScript FFI), test fixtures that stand
 for third-party code (`.claude/skills/ouroboric-sharingan/evals/files/`), and
-`labs/pratico/smoke/kokkos/*.cpp`, the C++ toolchain's smoke test (pending the owner's decision ⚠).
+`labs/pratico/smoke/kokkos/*.cpp`, the C++/Kokkos toolchain's smoke test, which can only be C++ (the owner's decision, 2026-10-21).
 The repo-wide tools are the Rust crates in `tools/` (one workspace, `nix run ./tools#<crate>`).
 
 ## The lab contract (hard rule)
