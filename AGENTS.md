@@ -25,7 +25,7 @@ this repo's root system configuration is legacy (see below) and the living part 
 |---|---|---|
 | `labs/pratico` | WAVEWATCH III toolchain (gfortran / OpenMPI / NetCDF), zsh-ai pilot, ai-jail recipes | [ww-lab](https://github.com/h0ffmann/ww-lab) (sparse submodule) |
 | `labs/publisher` | pandoc + TeX Live, `mkPdf`, a composite Action that builds and commits PDFs; shields-badge filter + TikZ pills, color emoji, Japanese via luatexja (lualatex) | ww-lab (flake input + Action), [h0ffmann/h0ffmann](https://github.com/h0ffmann/h0ffmann) (CV PDF) |
-| `labs/ptbr-pdf` | pandoc + a minimal XeLaTeX (`texliveBasic` + the template's packages): one `to-pdf` command, 729 MiB against publisher's 3.2 GiB | [ptbr-writter](https://github.com/h0ffmann/ptbr-writter) (the plugin's `.pdf` output) |
+| `labs/ptbr-pdf` | `to-pdf`, one Rust binary with Typst as a library and six embedded fonts: Markdown to PDF for pt-BR text; static musl build 25.2 MiB (8.1 MiB with xz) against 729 MiB for the pandoc + XeLaTeX it replaced | [ptbr-writer](https://github.com/h0ffmann/ptbr-writer) (the plugin's `.pdf` output) |
 | `labs/lint` | hadolint, actionlint, shellcheck, ruff, pyflakes, cloc, coverage, pdoc — a list, no scripts | [marola](https://github.com/h0ffmann/marola) (flake input) |
 | `labs/agentic` | ai-jail, OpenCode, Open Code Review (`ocr`), gh, and `jail-run` / `gh-token` / `clip` / `clip-relay` | marola (landing via #50) |
 | `labs/cuda` | nixos-cuda binary cache setup, torch venv with the driver libs on its path; x86_64-linux only | marola, this workstation (landing via #50) |
@@ -58,7 +58,8 @@ stays credited, with a link to [gvolpe/nix-config](https://github.com/gvolpe/nix
 **Hard rule: only Nix and Rust.** Code in this repository is Nix or Rust. The exceptions are the
 Gleam sites (`site/` and `labs/gleam-website`, with their JavaScript FFI), test fixtures that stand
 for third-party code (`.claude/skills/ouroboric-sharingan/evals/files/`), and
-`labs/pratico/smoke/kokkos/*.cpp`, the C++/Kokkos toolchain's smoke test, which can only be C++ (the owner's decision, 2026-10-21).
+`labs/pratico/smoke/kokkos/*.cpp`, the C++/Kokkos toolchain's smoke test, which can only be C++ (the owner's decision, 2026-10-21). Until it is ported, `scripts/release.sh` (a guardrail: it makes a DOI) stays shell; it calls
+`nix run ./tools#citation -- --check` for the citation check.
 The repo-wide tools are the Rust crates in `tools/` (one workspace, `nix run ./tools#<crate>`).
 
 ## The lab contract (hard rule)
@@ -89,12 +90,14 @@ ai-jail, so the file is readable from `flake.lock` alone without evaluating the 
 `checks.lab-json` (pure Nix, copied in every lab) asserts the shape and that every attribute
 resolves in the lab's pinned nixpkgs.
 
-Scripts (`labs/<lab>/scripts/*`) are one file each, `#!/usr/bin/env bash`, `set -euo pipefail`,
-run **from source** by CI and wrapped with `writeShellApplication` for consumers. Each has a
-`--self-test` mode that fakes its external commands on `PATH`; CI runs every self-test it finds
-and `nix flake check` runs them again in the sandbox. Trap: `runtimeInputs` must never list a
-tool the self-test fakes, since the wrapper prepends `runtimeInputs` and would shadow the fake
-(`labs/agentic/flake.nix` says which tools each script resolves from the caller's `PATH` instead).
+A lab's tools are Rust: a Cargo crate in `labs/<lab>/tools/` (one binary per command, std first),
+built by the lab's own flake with `rustPlatform.buildRustPackage` from the lab's pinned nixpkgs
+and `cargoLock.lockFile`, and wrapped (`makeWrapper`) with the programs it calls, so consumers keep
+the same command names. A lab stays self-contained: two labs that need the same small tool each
+keep their own copy. Tests are `cargo test`, run in the package build; `nix flake check` also runs
+`clippy -D warnings` and `cargo fmt --check`. No shell or Python script: the only code outside Nix
+and Rust is listed in the hard rule above. Repo-wide tools are the crates in `tools/`
+(`nix run ./tools#<crate>`).
 
 ## Setup & commands
 
@@ -105,7 +108,7 @@ just shell            # (lint, publisher, agentic, cuda) the tools on PATH, in y
 just ww3 / just dev   # (pratico) toolchain-only / interactive shell
 just versions         # (lint, publisher) what is pinned
 just smoke            # (pratico, publisher) the check CI builds
-just self-test        # (agentic, cuda) every script's --self-test, from source
+just test             # (agentic, ptbr-pdf; cuda, present, viz: self-test; pratico: tools-test) cargo test in the dev shell
 ```
 
 Definition of done for any change under `labs/<lab>` is the CI gate in
@@ -116,7 +119,6 @@ nix flake check --no-update-lock-file --print-build-logs .
 nix run nixpkgs#nixpkgs-fmt -- --check .     # ci resolves the lab's own locked nixpkgs; same tools
 nix run nixpkgs#statix -- check .
 nix run nixpkgs#deadnix -- --fail .
-nix run nixpkgs#shellcheck -- scripts/*      # when the lab has scripts
 just --list                                  # justfile parses (and with just 1.21, see below)
 nix run nixpkgs#actionlint                   # after any .github/** change
 ```
