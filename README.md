@@ -122,8 +122,10 @@ without a major bump (a minor bump before 1.0.0): the consumers break on their n
 
 ## CI
 
-GitHub-hosted runners only. [`ci.yml`](.github/workflows/ci.yml) checks that the legacy root
-evaluates; builds every lab (`nix flake check` with the lock required current, every `checks.*`
+GitHub-hosted runners only. [`ci.yml`](.github/workflows/ci.yml) runs on a push to `main` and on
+`workflow_dispatch`, not on pull requests: run the gate locally before a PR. It checks that the
+legacy root evaluates; builds every lab (`ptbr-pdf` only on `workflow_dispatch`, because it compiles
+Typst) (`nix flake check` with the lock required current, every `checks.*`
 output built) and lints it (`nixpkgs-fmt`, `statix`, `deadnix`, `shellcheck`, justfile parse,
 self-tests); runs the site rules (`just ci` in `site/`: format, tests, build and `site-check`);
 parses every justfile with Ubuntu 24.04's `just` 1.21; runs `reuse lint`, `actionlint` and the

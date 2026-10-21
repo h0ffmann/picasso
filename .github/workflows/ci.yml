@@ -8,12 +8,14 @@
 #     smoke test: Fortran + MPI + NetCDF-4 compiled and run in the sandbox), nixpkgs-fmt,
 #     statix, deadnix, shellcheck, justfile parse, and the scripts' own self-tests. devShells
 #     are evaluated, not built, so ai-jail (a Rust compile) and ParMETIS never build here.
+#
+# No run on pull requests, to save runner time: the gate runs after the merge, on main.
+# labs/ptbr-pdf compiles Typst from source, so it runs only on workflow_dispatch.
 name: ci
 
 on:
   push:
     branches: [main]
-  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -39,7 +41,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lab: [pratico, publisher, ptbr-pdf, lint, paper, gleam-website, agentic, cuda, present, viz]
+        lab: ${{ fromJSON(github.event_name == 'workflow_dispatch'
+          && '["pratico", "publisher", "ptbr-pdf", "lint", "paper", "gleam-website", "agentic", "cuda", "present", "viz"]'
+          || '["pratico", "publisher", "lint", "paper", "gleam-website", "agentic", "cuda", "present", "viz"]') }}
     defaults:
       run:
         working-directory: labs/${{ matrix.lab }}
