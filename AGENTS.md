@@ -36,22 +36,30 @@ this repo's root system configuration is legacy (see below) and the living part 
 **Hard rule: the site always shows the Marola and Ouroboric logos**, in the band under the
 header and linked to their projects, loaded from their own repositories (`marola-dev/marola`,
 `ouroboric-dev/ouroboric`) at a pinned commit and never copied into this repo, since they are
-trademarks and not under this repo's licence. `site/check.py` enforces it, and Gabriel Volpe's
+trademarks and not under this repo's licence. `tools/site-check` enforces it, and Gabriel Volpe's
 credit, in CI (`site rules`), on the built page. Bump the pinned commit in
 `site/src/picasso_site/family.gleam` when a project changes its logo.
 
 `site/` is a Gleam application (JavaScript target, [Lustre](https://lustre.build)) with its own
 `flake.nix`: `nix develop` there gives gleam, node, esbuild and just, and `just ci` (format, tests,
-build, `check.py`) is what CI and the Pages deploy run. It renders the repo's history from
+build, `site-check`) is what CI and the Pages deploy run. It renders the repo's history from
 `site/static/history.json`, the labs' cards, and the ouroboric-dev standings fetched live; `just
 build` prerenders the page into `site/dist/index.html` and the client takes it over in place.
 Hex packages are pinned by checksum in `site/manifest.toml`. After merges, refresh the history
-from a full clone with `python3 site/history.py` and commit the JSON. `site/static/drawings/` holds
+from a full clone with `just history` (in `site/`) and commit the JSON. `site/static/drawings/` holds
 original one-line drawings made for this repo in homage to Picasso; the README shows one of them.
 Never add a reproduction of a Picasso work (under copyright until the end of 2043), the Picasso signature,
 or anything that suggests the estate endorses this repo. Anything third-party that lands here gets
 its row in the README's License table, with its licence and the credit it requires; Gabriel Volpe
 stays credited, with a link to [gvolpe/nix-config](https://github.com/gvolpe/nix-config).
+
+## Only Nix and Rust (hard rule)
+
+**Hard rule: only Nix and Rust.** Code in this repository is Nix or Rust. The exceptions are the
+Gleam sites (`site/` and `labs/gleam-website`, with their JavaScript FFI), test fixtures that stand
+for third-party code (`.claude/skills/ouroboric-sharingan/evals/files/`), and
+`labs/pratico/smoke/kokkos/*.cpp`, the C++ toolchain's smoke test (pending the owner's decision ⚠).
+The repo-wide tools are the Rust crates in `tools/` (one workspace, `nix run ./tools#<crate>`).
 
 ## The lab contract (hard rule)
 
@@ -216,7 +224,7 @@ point: a session must not make its own rules weaker.
 | `hardware-configuration.nix` | generated on the machine, never by an agent |
 
 Never make a check pass by removing it, skipping it or making it weaker. A CI job, a self-test, a
-`check.py` rule or a `reuse lint` error that fails tells you what to fix.
+`site-check` rule or a `reuse lint` error that fails tells you what to fix.
 
 ## Project metadata
 
@@ -263,7 +271,7 @@ rules. A breaking change to a lab's exported shape is a major bump (a minor bump
 - An agent never makes or pushes a release tag. Each release makes a permanent Zenodo DOI, so
   only the human runs `just release`.
 - `release.yml` makes the GitHub release and starts `pages.yml` on `main`. The site's changelog
-  comes from the tags (`site/releases.py`) at build time. Do not commit a changelog file.
+  comes from the tags (`tools/site-releases`) at build time. Do not commit a changelog file.
 - `PICASSOPAPER.pdf` is the original, coloured paper: the output of
   `just render paper` (`tools/render`) from `docs/whitepapers/determinism-2026/whitepaper.html`. `WHITEPAPER.md` is the same
   paper in ASD-STE100 (two `/ste100` passes, logged in that directory's `STE100.md`), and
