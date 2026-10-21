@@ -272,7 +272,7 @@ fn header(drawing: Drawing, releases: Remote(Releases)) -> Element(Msg) {
         html.h1([], [html.text("picasso")]),
         html.p([attribute.class("lede")], [
           html.text(
-            "My Nix obsessions since December 2024: a NixOS desktop, then self-contained labs other repositories borrow, now on the way back to NixOS.",
+            "Self-contained Nix flakes that pin scientific, publishing and agentic toolchains for other repositories. Since December 2024; only Nix and Rust since 0.2.0.",
           ),
         ]),
         cite(releases),

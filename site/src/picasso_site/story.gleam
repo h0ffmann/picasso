@@ -51,8 +51,8 @@ pub const consumers = [
   Consumer(
     "h0ffmann/ptbr-writer",
     "gleam-website, ptbr-pdf",
-    "flake input, submodule, nix run (⚠ ptbr-pdf only on an unmerged branch)",
-    "4bd3b22, dcacdde",
+    "flake input, submodule, nix run (⚠ the pin to 53372f0 is on an open pull request)",
+    "4bd3b22, 53372f0",
   ),
 ]
 

@@ -57,7 +57,7 @@ redirects it, and the repositories marked so still write it.
 | | `publisher` | Action `uses: h0ffmann/nix-config/labs/publisher@main` | [`.github/workflows/pubs.yml`](https://github.com/h0ffmann/gcp-agentic-architect/blob/main/.github/workflows/pubs.yml) | `main` |
 | [h0ffmann/ptbr-writer](https://github.com/h0ffmann/ptbr-writer) | `gleam-website` | flake input `github:h0ffmann/picasso?dir=labs/gleam-website` | [`flake.nix`](https://github.com/h0ffmann/ptbr-writer/blob/main/flake.nix) | `4bd3b22` |
 | | `gleam-website` (the site's sources) | git submodule `forks/picasso`; `just pins` fails when it differs from the lock; ⚠ sparse not checked | [`.gitmodules`](https://github.com/h0ffmann/ptbr-writer/blob/main/.gitmodules) | `4bd3b22` |
-| | `ptbr-pdf` | `nix run "github:h0ffmann/picasso/$PICASSO_REV?dir=labs/ptbr-pdf"` for the plugin's `.pdf` output; ⚠ only on the unmerged branch `feat/ask-levels` | `plugins/ptbr-writer/scripts/to-pdf.sh` | `dcacdde` |
+| | `ptbr-pdf` | `nix run "github:h0ffmann/picasso/$PICASSO_REV?dir=labs/ptbr-pdf"` for the plugin's `.pdf` output; ⚠ on the open pull request h0ffmann/ptbr-writer#29 | `plugins/ptbr-writer/scripts/to-pdf.sh` | `53372f0` |
 
 Labs with no consumer found: `present` (the workstation only). `pratico`, `cuda` and `agentic` are
 also used on this workstation. marola does not take `cuda` as an input today. Private repositories
