@@ -1,0 +1,22 @@
+# rust-agent — the Rust toolchain for a climate-agent CLI. `just` lists recipes.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+here := justfile_directory()
+
+default:
+    @just --list
+
+# Enter the shell: the Rust toolchain and the feed tools on PATH, in your current directory.
+shell:
+    nix develop "{{here}}"
+
+# Print the exact tool versions this lab pins (builds checks.versions in the sandbox).
+versions:
+    nix build "{{here}}#versions" --print-build-logs --out-link "{{here}}/result" && cat "{{here}}/result/versions.txt"
+
+# Build and test the std-only smoke crate in the sandbox, with clippy and rustfmt (what CI builds).
+smoke:
+    nix build "{{here}}#checks.$(nix eval --impure --raw --expr builtins.currentSystem).smoke" --print-build-logs --no-link
+
+# cargo test in the smoke crate, inside the dev shell.
+test:
+    nix develop "{{here}}" --command cargo test --manifest-path "{{here}}/smoke/Cargo.toml"

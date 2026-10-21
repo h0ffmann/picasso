@@ -75,6 +75,7 @@ Each lab README has the recipes, what the lab pins (`What it pins`) and how to r
 | [`ptbr-pdf`](labs/ptbr-pdf) | Markdown to PDF for Portuguese: one Rust binary, `to-pdf`, Typst as a library, six fonts inside | `nix run github:h0ffmann/picasso?dir=labs/ptbr-pdf -- texto.md` |
 | [`ptbr-tools`](labs/ptbr-tools) | The ptbr-writer plugin's runtime scripts (hook, reading time, router) as one static Rust binary, 0.54 MiB, std only | `nix build github:h0ffmann/picasso?dir=labs/ptbr-tools#static` |
 | [`lint`](labs/lint) | hadolint, actionlint, shellcheck, ruff, pyflakes, cloc, coverage.py, pdoc as one list | `lib.<system>.tools` in your `mkShell` |
+| [`rust-agent`](labs/rust-agent) | rustc, cargo, clippy, rust-analyzer, nextest, deny, audit, machete, jq, xh for a Rust CLI that reads weather alerts and calls an LLM | `lib.<system>.tools` in your `mkShell` |
 | [`paper`](labs/paper) | Markdown papers to PDF and arXiv source: pandoc-crossref, XeLaTeX, pdfLaTeX | `just shell`, `just smoke` |
 | [`gleam-website`](labs/gleam-website) | Gleam (JavaScript target), node, esbuild, just: the toolchain of this repo's site | `just shell`, `just smoke` |
 | [`agentic`](labs/agentic) | ai-jail, OpenCode, Open Code Review, gh; `jail-run`, `gh-token`, `clip`, `clip-relay` | `just jco`, `just test` |
