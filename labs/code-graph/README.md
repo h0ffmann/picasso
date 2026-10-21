@@ -125,9 +125,9 @@ Measured on x86_64-linux with `nix path-info -Sh` and `stat`, nixpkgs `6510408d`
 
 | | Size |
 |---|---|
-| `packages.default` binary (glibc, stripped) | 15.9 MiB (16,636,064 bytes) |
+| `packages.default` binary (glibc, stripped) | 15.9 MiB (16,644,256 bytes) |
 | `packages.default` closure | 62.8 MiB |
-| `packages.static` (musl) binary and closure | 16.0 MiB (16,734,160 bytes; static, no other file) |
+| `packages.static` (musl) binary and closure | 16.0 MiB (16,742,352 bytes; static, no other file) |
 | `packages.static` with `xz -9e` | 1.1 MiB (1,192,652 bytes) (a measurement only: see the xz warning in [`ptbr-pdf`](../ptbr-pdf/README.md#benchmark-from-pandoc-to-rust)) |
 | nixpkgs `graphify` 0.9.74, closure | 579.7 MiB |
 
@@ -168,15 +168,27 @@ relations are added; without `--link` the graph.json is the same bytes as before
 key: it needs no mention of NAME, only a PATH that exists in the linked graph. Rule 2 does not read
 a REV that contains a `/`.
 
-In graph.html an external node is a dashed ring, with the legend entry `external: NAME`, and a click on
-it opens its `href`; the side panel shows the same link. A page opened with `#node=<id>` selects that
-node and centres the view on it. The page loads nothing: the link is a relative `<a>` that the viewer
-script sets, only on external nodes.
+In graph.html the link is a hop from one page to the other, HTML to HTML:
+
+- The header gets a button `↗ NAME` for each `--link` (a real `<a href>`: keyboard focus, middle click
+  opens a tab). NAME is the text.
+- An external node is an SVG `<a href="URL#node=<id>">` holding the ring and its label (`NAME: PATH ↗`),
+  larger than an ordinary node, in the accent colour (red, `--hop`, which no community uses), dashed
+  edge kept, tooltip "open in NAME's graph", underlined on hover. It works with scripting off. The
+  viewer follows it on a plain click (after a pan the click is not a hop); a middle or modified click
+  is the browser's.
+- The side panel of a file that depends on external nodes lists them as links.
+- `--backlink NAME=URL` (repeatable, `http(s)` or relative) adds `← NAME` to the header of the page
+  being made, so the other page can lead back. A page opened with `#node=<id>` selects that node and
+  centres the view on it, and, when `document.referrer` is a different page of the same origin, shows
+  "arrived from PAGE · back" (not shown from `file://`, where the origin is opaque).
+
+The page loads nothing: the only `href`s are the `--link` and `--backlink` URLs (the test asserts exactly those).
 
 ptbr-writer publishes two pages, `grafo/picasso.html` and `grafo/graph.html`:
 
 ```sh
-code-graph extract forks/picasso --out build/grafo-picasso --title picasso
+code-graph extract forks/picasso --out build/grafo-picasso --title picasso --backlink ptbr-writer=graph.html
 code-graph extract . --exclude forks --link picasso=build/grafo-picasso/graph.json@picasso.html --title ptbr-writer
 ```
 

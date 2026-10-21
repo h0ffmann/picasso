@@ -19,6 +19,27 @@ const RELS: &[&str] = &[
     "depends_on",
 ];
 
+fn nav_html(nav: &Nav) -> String {
+    let mut s = String::new();
+    for (name, url) in &nav.back {
+        let _ = write!(
+            s,
+            "<a class=\"hop back\" href=\"{}\">\u{2190} {}</a>",
+            esc(url),
+            esc(name)
+        );
+    }
+    for (name, url) in &nav.to {
+        let _ = write!(
+            s,
+            "<a class=\"hop\" href=\"{}\">\u{2197} {}</a>",
+            esc(url),
+            esc(name)
+        );
+    }
+    s
+}
+
 fn esc(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
@@ -131,7 +152,14 @@ fn layout(g: &Graph, w: f64, h: f64) -> Vec<(f64, f64)> {
         .collect()
 }
 
-pub fn render(g: &Graph, title: &str) -> String {
+/// Header links to other pages: `to` are linked graphs (NAME, URL), `back` the pages that link here.
+#[derive(Default)]
+pub struct Nav {
+    pub to: Vec<(String, String)>,
+    pub back: Vec<(String, String)>,
+}
+
+pub fn render(g: &Graph, title: &str, nav: &Nav) -> String {
     let n = g.nodes.len();
     let scale = (n as f64 / 1500.0).sqrt().max(1.0);
     let (w, h) = ((1600.0 * scale).round(), (1000.0 * scale).round());
@@ -139,7 +167,7 @@ pub fn render(g: &Graph, title: &str) -> String {
     let deg = g.degree();
     let mut o = String::new();
     let _ = write!(o, "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>{}</title>\n<style>{CSS}</style></head><body>\n", esc(title));
-    let _ = write!(o, "<header><h1>{}</h1><input id=\"q\" type=\"search\" placeholder=\"Search a label or a file\" aria-label=\"Search\"><button id=\"fit\" type=\"button\">Fit</button><span>{} nodes, {} edges</span></header>\n<main>\n", esc(title), n, g.edges.len());
+    let _ = write!(o, "<header><h1>{}</h1>{}<input id=\"q\" type=\"search\" placeholder=\"Search a label or a file\" aria-label=\"Search\"><button id=\"fit\" type=\"button\">Fit</button><span>{} nodes, {} edges</span></header>\n<main>\n", esc(title), nav_html(nav), n, g.edges.len());
     let _ = write!(o, "<svg id=\"g\" viewBox=\"0 0 {w} {h}\" role=\"img\" aria-label=\"Code graph of {}\"><g id=\"edges\">", esc(title));
     for e in &g.edges {
         let rel = if RELS.contains(&e.rel.as_str()) {
@@ -154,35 +182,32 @@ pub fn render(g: &Graph, title: &str) -> String {
         );
     }
     o += "</g><g id=\"nodes\">";
+    let mut boxes: Vec<(f64, f64, f64, f64)> = Vec::new();
     for (i, nd) in g.nodes.iter().enumerate() {
         let r = 3.0 + (1.0 + deg[i] as f64).ln().min(4.0) * 1.6;
-        let (ext, style) = if !nd.repo.is_empty() {
-            // a node of a linked repository: a hollow dashed ring in its community's colour
-            (
-                " r",
-                format!(" style=\"stroke:var(--c{})\"", nd.community % 12),
-            )
-        } else if nd.external {
-            (" x", String::new())
-        } else {
-            ("", String::new())
-        };
-        let _ = write!(o, "<circle class=\"c{}{ext}\"{style} cx=\"{}\" cy=\"{}\" r=\"{r:.1}\"><title>{}</title></circle>", nd.community % 12, pos[i].0, pos[i].1, esc(&nd.label));
+        let (cx, cy, cl) = (pos[i].0, pos[i].1, nd.community % 12);
+        if !nd.repo.is_empty() {
+            // a node of a linked repository: a real hyperlink, ring and label, bigger than the rest
+            let (r, lab) = (r.max(5.0) * 1.7, format!("{} \u{2197}", nd.label));
+            let (x, y) = (cx + r + 4.0, cy + 5.0);
+            boxes.push((x, y - 14.0, x + 8.6 * lab.chars().count() as f64, y + 4.0));
+            let _ = write!(o, "<a class=\"hop\" href=\"{}\"><title>open in {}'s graph</title><circle class=\"c{cl} r\" cx=\"{cx}\" cy=\"{cy}\" r=\"{r:.1}\"/><text x=\"{x}\" y=\"{y}\">{}</text></a>", esc(&nd.href), esc(&nd.repo), esc(&lab));
+            continue;
+        }
+        let ext = if nd.external { " x" } else { "" };
+        let _ = write!(o, "<circle class=\"c{cl}{ext}\" cx=\"{cx}\" cy=\"{cy}\" r=\"{r:.1}\"><title>{}</title></circle>", esc(&nd.label));
     }
     o += "</g><g id=\"lab\">";
     // labels for the best-connected nodes, skipping any that would overlap one already placed
-    // always labelled: the nodes of a linked repository and the files that point at them
-    let mut always: Vec<bool> = g.nodes.iter().map(|x| !x.repo.is_empty()).collect();
+    // always labelled: the files that point at a linked repository (its own nodes carry their label)
+    let mut always: Vec<bool> = vec![false; n];
     for e in &g.edges {
         if !g.nodes[e.t].repo.is_empty() {
             always[e.s] = true;
         }
     }
-    let mut order: Vec<usize> = (0..n)
-        .filter(|&i| !g.nodes[i].external || !g.nodes[i].repo.is_empty())
-        .collect();
+    let mut order: Vec<usize> = (0..n).filter(|&i| !g.nodes[i].external).collect();
     order.sort_by_key(|&i| (!always[i], std::cmp::Reverse(deg[i]), i));
-    let mut boxes: Vec<(f64, f64, f64, f64)> = Vec::new();
     for i in order
         .into_iter()
         .take(400 + always.iter().filter(|&&a| a).count())
@@ -261,9 +286,9 @@ pub fn render(g: &Graph, title: &str) -> String {
 
 const CSS: &str = r#"
 :root{--bg:#fafaf7;--fg:#1d1d1b;--mut:#6b6b66;--pan:#f0efe9;--line:#d8d6cc;
---c0:#2f6fb0;--c1:#c8602b;--c2:#3c8f5a;--c3:#8a4fa8;--c4:#b8962e;--c5:#2b9aa0;--c6:#b8426b;--c7:#6b7b2c;--c8:#5a5fb8;--c9:#a8603c;--c10:#4a8a8a;--c11:#8a6a9a}
+--hop:#d4002a;--c0:#2f6fb0;--c1:#c8602b;--c2:#3c8f5a;--c3:#8a4fa8;--c4:#b8962e;--c5:#2b9aa0;--c6:#b8426b;--c7:#6b7b2c;--c8:#5a5fb8;--c9:#a8603c;--c10:#4a8a8a;--c11:#8a6a9a}
 @media (prefers-color-scheme:dark){:root{--bg:#16171a;--fg:#e8e6df;--mut:#a09e96;--pan:#202226;--line:#3a3c42;
---c0:#6aa6e6;--c1:#f0905a;--c2:#6fcf8f;--c3:#c08ae0;--c4:#e0c060;--c5:#5fd0d6;--c6:#ee7fa4;--c7:#a8bc58;--c8:#8c92ee;--c9:#e09a70;--c10:#78c0c0;--c11:#c0a0d0}}
+--hop:#ff5577;--c0:#6aa6e6;--c1:#f0905a;--c2:#6fcf8f;--c3:#c08ae0;--c4:#e0c060;--c5:#5fd0d6;--c6:#ee7fa4;--c7:#a8bc58;--c8:#8c92ee;--c9:#e09a70;--c10:#78c0c0;--c11:#c0a0d0}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;height:100vh}
 header{display:flex;gap:12px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 h1{font-size:16px;margin:0}h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:16px 0 6px}
@@ -277,9 +302,11 @@ ul{list-style:none;margin:0;padding:0}#legend li{display:flex;gap:8px;align-item
 i.s0,.c0{fill:var(--c0);background:var(--c0)}i.s1,.c1{fill:var(--c1);background:var(--c1)}i.s2,.c2{fill:var(--c2);background:var(--c2)}i.s3,.c3{fill:var(--c3);background:var(--c3)}
 i.s4,.c4{fill:var(--c4);background:var(--c4)}i.s5,.c5{fill:var(--c5);background:var(--c5)}i.s6,.c6{fill:var(--c6);background:var(--c6)}i.s7,.c7{fill:var(--c7);background:var(--c7)}
 i.s8,.c8{fill:var(--c8);background:var(--c8)}i.s9,.c9{fill:var(--c9);background:var(--c9)}i.s10,.c10{fill:var(--c10);background:var(--c10)}i.s11,.c11{fill:var(--c11);background:var(--c11)}
-i{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}svg circle{background:none;stroke:var(--bg);stroke-width:1}svg circle.x{opacity:.55}svg circle.r{fill:var(--bg);stroke-width:2.5;stroke-dasharray:3 2}i.r{background:none;border:2px dashed var(--mut)}
+i{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}svg circle{background:none;stroke:var(--bg);stroke-width:1}svg circle.x{opacity:.55}svg circle.r{fill:var(--bg);stroke:var(--hop);stroke-width:3;stroke-dasharray:4 3;opacity:1}i.r{background:none;border:2px dashed var(--hop)}
 .e{stroke-width:1;stroke:var(--mut);opacity:.35}.e.contains,.e.method,.e.defines{opacity:.18}.e.calls{stroke:var(--c1);opacity:.6}.e.imports_from,.e.imports{stroke:var(--c0);opacity:.5}.e.inherits,.e.implements{stroke:var(--c3);opacity:.7}.e.references{stroke:var(--c2);opacity:.4}.e.depends_on{stroke:var(--c4);opacity:.9;stroke-width:1.5;stroke-dasharray:4 3}
 i.l{width:16px;height:3px;border-radius:0;background:var(--mut)}i.l.calls{background:var(--c1)}i.l.imports_from,i.l.imports{background:var(--c0)}i.l.inherits,i.l.implements{background:var(--c3)}i.l.references{background:var(--c2)}i.l.depends_on{background:var(--c4)}
+a.hop{cursor:pointer}header a.hop{padding:4px 10px;border:2px solid var(--hop);border-radius:6px;color:var(--hop);font-weight:600;text-decoration:none}header a.hop:hover,header a.hop:focus-visible{background:var(--hop);color:var(--bg)}svg a.hop text{font-size:15px;font-weight:600;fill:var(--hop);pointer-events:auto}svg a.hop:hover text,svg a.hop:focus-visible text{text-decoration:underline}svg a.hop:hover circle,svg a.hop:focus-visible circle{fill:var(--hop)}svg a:focus-visible{outline:none}
+#from{padding:4px 16px;background:var(--pan);border-bottom:1px solid var(--line);color:var(--mut)}#from button{margin-left:8px;padding:0 8px}
 text{font-size:13px;fill:var(--fg);paint-order:stroke;stroke:var(--bg);stroke-width:3px;pointer-events:none}
 svg.f circle{opacity:.1}svg.f .e{opacity:.03}svg.f circle.on{opacity:1}svg.f .e.on{opacity:.9;stroke-width:1.6}svg.f #lab{display:none}svg circle.pick{stroke:var(--fg);stroke-width:2}
 @media (max-width:760px){main{flex-direction:column}aside{width:auto;max-height:40vh;border-left:0;border-top:1px solid var(--line)}}

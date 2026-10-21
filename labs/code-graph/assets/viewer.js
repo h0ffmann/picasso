@@ -59,7 +59,14 @@
     }
     ed.slice(0, 60).forEach(function (k) {
       var e = D.e[k], out = e[0] === i, o = D.n[out ? e[1] : e[0]];
-      row((out ? "→ " : "← ") + o[0] + "  [" + e[2] + "]");
+      if (out && o[5]) {
+        // a dependency on another repository's node: a link to its page
+        var l = document.createElement("a");
+        l.setAttribute("href", o[5]);
+        l.className = "hop";
+        l.textContent = "\u2197 " + o[0] + "  [" + e[2] + "]";
+        info.appendChild(l);
+      } else row((out ? "→ " : "← ") + o[0] + "  [" + e[2] + "]");
     });
     if (ed.length > 60) row("… " + (ed.length - 60) + " more");
   }
@@ -105,6 +112,8 @@
   }, { passive: false });
   var drag = null, moved = 0;
   svg.addEventListener("pointerdown", function (ev) {
+    // a middle or modified click on a hyperlink is the browser's own
+    if (ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
     drag = { x: ev.clientX, y: ev.clientY, vb: vb.slice() };
     moved = 0;
     svg.setPointerCapture(ev.pointerId);
@@ -117,15 +126,14 @@
     view();
   });
   svg.addEventListener("pointerup", function (ev) {
+    if (!drag) return;
     drag = null;
     if (moved > 4) return;
-    var t = ev.target;
-    if (t.tagName === "circle") {
-      var i = Array.prototype.indexOf.call(N, t);
-      // a node of another repository: its page, focused on that node
-      if (t.classList.contains("r") && D.n[i][5]) location.assign(D.n[i][5]);
-      else select(i);
-    } else reset();
+    var t = ev.target, a = t.closest("a.hop");
+    // pointer capture retargets the click to the svg: follow the hyperlink here
+    if (a) location.assign(a.getAttribute("href"));
+    else if (t.tagName === "circle") select(Array.prototype.indexOf.call(N, t));
+    else reset();
   });
   document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") { q.value = ""; reset(); } });
   document.getElementById("fit").addEventListener("click", function () { vb = D.v.slice(); view(); });
@@ -143,6 +151,21 @@
       }
     }
   }
+  // opened from another page of the same site: say so, with a way back
+  (function () {
+    var r;
+    try { r = new URL(document.referrer); } catch (_) { return; }
+    if (!/^#node=/.test(location.hash) || r.origin !== location.origin || r.pathname === location.pathname) return;
+    var b = document.createElement("div"), a = document.createElement("a"), k = document.createElement("button");
+    b.id = "from";
+    a.setAttribute("href", r.href);
+    a.textContent = r.pathname.split("/").pop() || r.pathname;
+    k.type = "button";
+    k.textContent = "back";
+    k.addEventListener("click", function () { history.back(); });
+    b.append("arrived from ", a, " \u00b7 ", k);
+    document.body.insertBefore(b, document.querySelector("main"));
+  })();
   window.addEventListener("hashchange", focus);
   reset();
   focus();
