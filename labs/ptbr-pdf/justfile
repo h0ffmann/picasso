@@ -11,7 +11,7 @@ default:
 to-pdf *args:
     nix run "{{here}}" -- "$@"
 
-# Enter the shell: to-pdf, pandoc and xelatex on PATH, in your current directory.
+# Enter the shell: rustc, cargo, clippy, rustfmt and rust-analyzer on PATH.
 shell:
     nix develop "{{here}}"
 
@@ -22,3 +22,7 @@ smoke:
 # The closure size a consumer downloads to disk.
 size:
     nix path-info -Sh "$(nix build "{{here}}#to-pdf" --no-link --print-out-paths)"
+
+# cargo test in the dev shell (escaper, emitter, end-to-end PDF).
+test:
+    cd "{{here}}" && nix develop "{{here}}" -c cargo test

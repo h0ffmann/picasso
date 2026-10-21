@@ -193,8 +193,9 @@ just smoke-docx       # the same sample as .docx, the optional non-TeX output (C
 
 ## ptbr-pdf
 
-Markdown → PDF for Portuguese text and nothing else: pandoc and a minimal XeLaTeX behind one
-`to-pdf` command, 729 MiB on disk against publisher's 3.2 GiB. First consumer: the `.pdf` output of
+Markdown → PDF for Portuguese text and nothing else: one Rust binary, `to-pdf`, with Typst as a
+library and the fonts inside it. 93.6 MiB closure (46.6 MiB binary; 46.7 MiB static musl build)
+against publisher's 3.2 GiB. First consumer: the `.pdf` output of
 [ptbr-writter](https://github.com/h0ffmann/ptbr-writter). See [`labs/ptbr-pdf`](labs/ptbr-pdf).
 
 ```console
@@ -399,7 +400,7 @@ just smoke              # example/ graphed and queried in the sandbox (CI)
 ├── labs/
 │   ├── pratico/        WW3 toolchain, zsh-ai pilot, ai-jail       (flake, lock, justfile, README, scripts/)
 │   ├── publisher/      pandoc + TeX Live, mkPdf, action.yml       (flake, lock, justfile, README, example/)
-│   ├── ptbr-pdf/       pandoc + minimal XeLaTeX, one to-pdf command  (flake, lock, justfile, README, example/)
+│   ├── ptbr-pdf/       Rust + Typst, one to-pdf binary  (flake, lock, justfile, README, example/)
 │   ├── lint/           lint toolchain as one list, checks.versions   (flake, lock, justfile, README)
 │   ├── paper/          pandoc + crossref, XeLaTeX / pdfLaTeX for papers  (flake, lock, justfile, README, example/)
 │   ├── gleam-website/  Gleam (JavaScript) + node + esbuild for sites  (flake, lock, justfile, README, example/)

@@ -17,3 +17,29 @@ systemctl status app
 ```
 
 Mais em [picasso](https://github.com/h0ffmann/picasso).
+
+```json
+{"serviço": "app", "ativo": true, "tentativas": 3, "nota": null}
+```
+
+```python
+def reiniciar(servico: str) -> bool:
+    return servico == "app"  # ação
+```
+
+```sql
+SELECT servico, COUNT(*) FROM logs WHERE nivel = 'erro' GROUP BY servico;
+```
+
+```rust
+fn main() {
+    let tempo: u32 = 500;
+    println!("limite: {tempo} ms");
+}
+```
+
+```scala
+object Reinicio {
+  def limite(ms: Int): Boolean = ms > 500
+}
+```

@@ -1,4 +1,4 @@
 {
-  "summary": "pandoc + a minimal XeLaTeX for pt-BR: Markdown to PDF, a fraction of publisher's size",
-  "headline": ["pandoc"]
+  "summary": "Markdown to PDF for pt-BR in one Rust binary, Typst as a library, fonts embedded",
+  "headline": ["rustc", "cargo"]
 }

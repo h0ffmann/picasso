@@ -1,0 +1,20 @@
+[package]
+name = "to-pdf"
+version = "0.1.0"
+edition = "2021"
+description = "Markdown to PDF for pt-BR text, with Typst as a library"
+license = "Apache-2.0"
+publish = false
+
+[dependencies]
+pulldown-cmark = { version = "0.13", default-features = false }
+typst = "0.15"
+typst-as-lib = { version = "0.17", default-features = false }
+typst-assets = { version = "0.15", features = ["fonts"] }
+typst-layout = "0.15"
+typst-pdf = "0.15"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
