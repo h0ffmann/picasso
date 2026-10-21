@@ -2,7 +2,7 @@
 """Deposit the whitepaper on Zenodo, as a record of its own (not the picasso repository).
 
   ZENODO_TOKEN=... python3 zenodo.py draft     # create the draft from zenodo.json, reserve a DOI into doi.txt
-  node render.mjs                              # re-render: the cover's "Cite as" now carries the DOI
+  just render paper                            # re-render: the cover's "Cite as" now carries the DOI
   ZENODO_TOKEN=... python3 zenodo.py upload    # attach ../../../PICASSOPAPER.pdf to the draft
   python3 zenodo.py --self-test                # checks zenodo.json and the files, no network
 
@@ -36,7 +36,7 @@ def check():
     assert "doi" not in m and "publication_date" not in m, "zenodo.json: Zenodo sets doi and publication_date"
     assert all(c.get("orcid") for c in m["creators"]), "zenodo.json: every creator needs an ORCID"
     assert len(m["references"]) == 30, "zenodo.json: references out of step with the paper"
-    assert PDF.exists(), "PICASSOPAPER.pdf missing: run node render.mjs"
+    assert PDF.exists(), "PICASSOPAPER.pdf missing: run just render paper"
     return m
 
 
@@ -54,7 +54,7 @@ def main(argv):
         d = api(base, "POST", "/deposit/depositions", token, {"metadata": {**m, "prereserve_doi": True}})
         STATE.write_text(f"{base} {d['id']}\n")
         DOI.write_text(d["metadata"]["prereserve_doi"]["doi"] + "\n")
-        print(f"draft {d['id']}: {d['links']['html']}\nreserved DOI {DOI.read_text().strip()}; now run: node render.mjs")
+        print(f"draft {d['id']}: {d['links']['html']}\nreserved DOI {DOI.read_text().strip()}; now run: just render paper")
     elif "upload" in argv:
         base, dep = STATE.read_text().split()
         d = api(base, "GET", f"/deposit/depositions/{dep}", token)

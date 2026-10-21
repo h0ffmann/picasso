@@ -11,8 +11,8 @@ for [ouroboric-dev](https://github.com/ouroboric-dev). The repo root has it in t
 | File | Is |
 |---|---|
 | `whitepaper.html` | the source; every reference in it was checked against Crossref, arXiv or the primary page |
-| `render.mjs` | prints it to `PICASSOPAPER.pdf` with headless Chromium (`node render.mjs`, Playwright on the module path) |
-| `render-ste.mjs` | prints `WHITEPAPER.md` to `WHITEPAPER.pdf` the same way (needs pandoc) |
+| `just render paper` | prints it to `PICASSOPAPER.pdf` with headless Chromium (`just render paper`) |
+| `just render ste` | prints `WHITEPAPER.md` to `WHITEPAPER.pdf` the same way (pandoc from Nix) |
 | `STE100.md` | what each ASD-STE100 pass changed, and the sentences kept outside the rules |
 | `image.nix` | experiment B of §5.3: a factory-layer OCI image that `nix-build --check` rebuilds bit-for-bit |
 | `zenodo.json`, `zenodo.py` | the Zenodo record for the paper alone (a report, CC BY 4.0), and the script that deposits it |
@@ -30,7 +30,7 @@ person pressing Publish on zenodo.org.
 export ZENODO_TOKEN=...              # zenodo.org → Applications → Personal access token, scope deposit:write
 python3 zenodo.py --self-test        # metadata and files, no network
 python3 zenodo.py draft              # draft from zenodo.json, reserves the DOI into doi.txt
-node render.mjs                      # the cover's "Cite as" line now shows the DOI
+just render paper                    # the cover's "Cite as" line now shows the DOI
 python3 zenodo.py upload             # attaches PICASSOPAPER.pdf to the draft
 ```
 

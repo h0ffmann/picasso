@@ -1,0 +1,9 @@
+[package]
+name = "render"
+version = "0.1.0"
+edition = "2024"
+description = "Prints an HTML page to a PDF with headless Chromium (DevTools over a pipe), with a footer."
+
+[dependencies]
+base64 = "0.22"
+serde_json = "1"

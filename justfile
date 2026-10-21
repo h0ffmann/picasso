@@ -194,3 +194,17 @@ mixcq:
     @repomix --config code-quality.config.json
     @cat nixos.md | xclip -selection clipboard
     @echo "CODE QUALITY: Contents of nixos.md copied to clipboard"
+
+
+# the three PDFs: `just render study|paper|ste` (Chromium and pandoc from Nix, tools/render in Rust; Google Fonts need network)
+render which:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    P=github:NixOS/nixpkgs/6510408d147d8c5e6d76043e899e9251756f6a75
+    case "{{which}}" in
+      study) a=(page docs/studies/determinate-2026/study.html docs/studies/determinate-2026/study.pdf --footer "h0ffmann/picasso · picasso and Determinate Nix · 12 October 2026") ;;
+      paper) a=(page docs/whitepapers/determinism-2026/whitepaper.html PICASSOPAPER.pdf --doi docs/whitepapers/determinism-2026/doi.txt --footer "h0ffmann/picasso · same inputs, same factory · 12 October 2026") ;;
+      ste) a=(ste .) ;;
+      *) echo "usage: just render study|paper|ste" >&2; exit 1 ;;
+    esac
+    nix shell $P#chromium $P#pandoc -c env CHROMIUM=chromium nix run ./tools#render -- "${a[@]}"
