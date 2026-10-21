@@ -1,7 +1,7 @@
 {
-  "title": "picasso: self-contained Nix flakes for scientific and agentic toolchains, and the NixOS workstation they run on",
+  "title": "picasso: self-contained Nix flakes that pin scientific, publishing and agentic toolchains",
   "upload_type": "software",
-  "description": "<p>picasso, formerly nix-config, is a set of self-contained Nix flakes, called labs, that pin the toolchains a computational ocean-science and software project needs: WAVEWATCH III with gfortran, OpenMPI and NetCDF (pratico), a pandoc and TeX Live publishing pipeline with its own GitHub Action (publisher), a lint set (lint), a sandbox and helpers for coding agents (agentic), a CUDA and PyTorch host setup (cuda), and a presenter's desk for screen annotation, capture and webcam profiles (present). Each lab references nothing outside its own directory, commits its lock file, and exports the same outputs, so another repository can borrow one as a flake input, a sparse git submodule or a GitHub Action and get the same toolchain on any machine and in CI. CI builds every lab's checks in the Nix sandbox on every push.</p><p>The same repository defines the author's NixOS workstation and a one-command virtual machine for trying it from another Linux system. It is the toolchain layer under WW3 GPU Lab and marola, which consume its labs.</p>",
+  "description": "<p>picasso, formerly nix-config, is a set of self-contained Nix flakes, called labs, that pin scientific, publishing and agentic toolchains for other repositories. The ten labs are: WAVEWATCH III with gfortran, OpenMPI and NetCDF (pratico); a pandoc and TeX Live publishing pipeline with its own GitHub Action (publisher); Markdown to PDF for Portuguese in one Rust binary with Typst (ptbr-pdf); a lint set (lint); Markdown papers to PDF and arXiv source (paper); a Gleam toolchain for static sites (gleam-website); a sandbox and helpers for coding agents (agentic); a CUDA cache and PyTorch environment (cuda); a presenter's desk for screen annotation, capture and webcam profiles (present); and a code graph of a repository (viz). Each lab references nothing outside its own directory, commits its lock file and exports the same outputs, so a consumer gets the same pinned toolchain on any machine and in CI: the builds are deterministic, and CI builds every lab's checks in the Nix sandbox on every push. The code is only Nix and Rust: the repository tools are one Rust workspace and the lab tools are Rust crates. The smallest result is ptbr-pdf: the same Markdown-to-PDF job needs 729 MiB with pandoc and XeLaTeX and 25.2 MiB as one static Rust and Typst binary. picasso is the toolchain layer under WW3 GPU Lab, marola, ptbr-writer and other repositories, which borrow a lab as a flake input, a sparse git submodule or a GitHub Action.</p>",
   "creators": [
     {
       "name": "Hoffmann, Matheus",
@@ -15,7 +15,6 @@
   "keywords": [
     "Nix",
     "Nix flakes",
-    "NixOS",
     "nixpkgs",
     "reproducible builds",
     "reproducible research",
@@ -34,7 +33,14 @@
     "LaTeX",
     "AI coding agents",
     "sandboxing",
-    "research software"
+    "research software",
+    "Rust",
+    "Typst",
+    "deterministic builds",
+    "software packaging",
+    "software distribution",
+    "functional package management",
+    "supply chain"
   ],
   "related_identifiers": [
     {
@@ -77,7 +83,55 @@
       "relation": "requires",
       "scheme": "url",
       "resource_type": "software"
+    },
+    {
+      "identifier": "10.1145/1411204.1411255",
+      "relation": "references",
+      "scheme": "doi",
+      "resource_type": "publication-conferencepaper"
+    },
+    {
+      "identifier": "10.1017/S0956796810000195",
+      "relation": "references",
+      "scheme": "doi",
+      "resource_type": "publication-article"
+    },
+    {
+      "identifier": "https://edolstra.github.io/pubs/phd-thesis.pdf",
+      "relation": "references",
+      "scheme": "url",
+      "resource_type": "publication-thesis"
+    },
+    {
+      "identifier": "https://www.usenix.org/legacy/event/lisa04/tech/dolstra.html",
+      "relation": "references",
+      "scheme": "url",
+      "resource_type": "publication-conferencepaper"
+    },
+    {
+      "identifier": "10.48550/arXiv.1305.4584",
+      "relation": "references",
+      "scheme": "doi",
+      "resource_type": "publication-preprint"
+    },
+    {
+      "identifier": "10.1109/MS.2021.3073045",
+      "relation": "references",
+      "scheme": "doi",
+      "resource_type": "publication-article"
+    },
+    {
+      "identifier": "10.1145/3639476.3639767",
+      "relation": "references",
+      "scheme": "doi",
+      "resource_type": "publication-conferencepaper"
+    },
+    {
+      "identifier": "10.48550/arXiv.2501.15919",
+      "relation": "references",
+      "scheme": "doi",
+      "resource_type": "publication-preprint"
     }
   ],
-  "notes": "Consumers: WW3 GPU Lab (doi:10.5281/zenodo.23221351) uses the pratico and publisher labs, and marola (doi:10.5281/zenodo.23224155) uses the lint lab. The repository layout and README style follow gvolpe/nix-config by Gabriel Volpe. The name is a homage to Pablo Picasso's one-line drawings and implies no affiliation with the Picasso estate; the logo and drawings are original."
+  "notes": "Consumers: WW3 GPU Lab (doi:10.5281/zenodo.23221351, github.com/h0ffmann/ww3-gpu) uses the pratico, publisher and gleam-website labs; marola (doi:10.5281/zenodo.23224155) uses the lint and agentic labs; ptbr-writer (github.com/h0ffmann/ptbr-writer) uses ptbr-pdf and gleam-website. The repository layout and README style follow gvolpe/nix-config by Gabriel Volpe. The name is a homage to Pablo Picasso's one-line drawings and implies no affiliation with the Picasso estate; the logo and drawings are original."
 }

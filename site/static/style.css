@@ -273,3 +273,9 @@ h3 { font-family: 'Fjalla One', 'Arial Narrow', sans-serif; font-weight: 400; fo
 .logo span { font-size: 13px; color: var(--muted); }
 .logo b { display: block; font: 400 1.3rem/1.1 'Fjalla One', sans-serif; color: var(--text); }
 .mark { vertical-align: -4px; }
+
+/* story */
+.card-title { font: 400 1.2rem/1.2 'Fjalla One', sans-serif; }
+.use h3 { margin-top: 28px; }
+.use pre { margin: 8px 0 0; overflow-x: auto; font-size: 12px; }
+.table-scroll { max-width: 100%; }

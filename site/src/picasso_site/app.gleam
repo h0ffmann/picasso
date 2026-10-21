@@ -24,6 +24,7 @@ import picasso_site/ffi
 import picasso_site/format
 import picasso_site/markdown
 import picasso_site/readiness.{type Readiness, type Status}
+import picasso_site/story
 
 const org = "ouroboric-dev"
 
@@ -241,9 +242,15 @@ pub fn view(model: Model) -> Element(Msg) {
     html.main([attribute.class("wrap")], [
       credit(),
       family.band(),
-      history_section(model.history),
-      changelog_section(model.releases),
+      story.what(),
+      story.why(),
+      story.users(),
+      story.turn(),
+      story.proof(),
       labs_section(model.history),
+      story.papers_section(),
+      changelog_section(model.releases),
+      history_section(model.history),
       standings(model),
     ]),
     footer(model.updated),
@@ -265,7 +272,7 @@ fn header(drawing: Drawing, releases: Remote(Releases)) -> Element(Msg) {
         html.h1([], [html.text("picasso")]),
         html.p([attribute.class("lede")], [
           html.text(
-            "My Nix obsessions since December 2024: a NixOS desktop, then self-contained labs other repositories borrow, now on the way back to NixOS.",
+            "Self-contained Nix flakes that pin scientific, publishing and agentic toolchains for other repositories. Since December 2024; only Nix and Rust since 0.2.0.",
           ),
         ]),
         cite(releases),
@@ -274,9 +281,13 @@ fn header(drawing: Drawing, releases: Remote(Releases)) -> Element(Msg) {
           status("is-soon", "NixOS development ", "soon"),
         ]),
         html.nav([attribute.class("jump")], [
-          link("#history", "History"),
-          link("#changelog", "Changelog"),
+          link("#users", "Who uses it"),
+          link("#turn", "0.2.0"),
+          link("#proof", "Proof"),
           link("#labs", "Labs"),
+          link("#papers", "Papers"),
+          link("#changelog", "Changelog"),
+          link("#history", "History"),
           link("#standings", "ouroboric-dev standings"),
           link("plan/hosting-plan.pdf", "Hosting plan (PDF)"),
           link(
@@ -700,6 +711,7 @@ fn labs_section(history: Remote(History)) -> Element(msg) {
       ),
     ]),
     html.ul([attribute.class("labs")], labs),
+    story.use_a_lab(),
   ])
 }
 

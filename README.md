@@ -16,8 +16,9 @@
 
 ## In one minute
 
-- picasso is a set of **labs**: self-contained [Nix](https://nixos.org/) flakes for the tools I work
-  in, on an Ubuntu workstation (i9 + RTX 4090) with [Determinate Nix](https://determinate.systems/nix/).
+- picasso is a set of **labs**: self-contained [Nix](https://nixos.org/) flakes that pin scientific,
+  publishing and agentic toolchains for other repositories, with deterministic builds, on an
+  Ubuntu workstation (i9 + RTX 4090) with [Determinate Nix](https://determinate.systems/nix/).
 - A lab is one directory with its own `flake.nix`, `flake.lock`, `justfile`, `lab.json` and README.
   It references nothing outside itself, so other repositories can borrow it: as a flake input, as a
   sparse git submodule, or as a GitHub Action.
@@ -56,7 +57,7 @@ redirects it, and the repositories marked so still write it.
 | | `publisher` | Action `uses: h0ffmann/nix-config/labs/publisher@main` | [`.github/workflows/pubs.yml`](https://github.com/h0ffmann/gcp-agentic-architect/blob/main/.github/workflows/pubs.yml) | `main` |
 | [h0ffmann/ptbr-writer](https://github.com/h0ffmann/ptbr-writer) | `gleam-website` | flake input `github:h0ffmann/picasso?dir=labs/gleam-website` | [`flake.nix`](https://github.com/h0ffmann/ptbr-writer/blob/main/flake.nix) | `4bd3b22` |
 | | `gleam-website` (the site's sources) | git submodule `forks/picasso`; `just pins` fails when it differs from the lock; ⚠ sparse not checked | [`.gitmodules`](https://github.com/h0ffmann/ptbr-writer/blob/main/.gitmodules) | `4bd3b22` |
-| | `ptbr-pdf` | `nix run "github:h0ffmann/picasso/$PICASSO_REV?dir=labs/ptbr-pdf"` for the plugin's `.pdf` output; ⚠ only on the unmerged branch `feat/ask-levels` | `plugins/ptbr-writer/scripts/to-pdf.sh` | `dcacdde` |
+| | `ptbr-pdf` | `nix run "github:h0ffmann/picasso/$PICASSO_REV?dir=labs/ptbr-pdf"` for the plugin's `.pdf` output; ⚠ on the open pull request h0ffmann/ptbr-writer#29 | `plugins/ptbr-writer/scripts/to-pdf.sh` | `53372f0` |
 
 Labs with no consumer found: `present` (the workstation only). `pratico`, `cuda` and `agentic` are
 also used on this workstation. marola does not take `cuda` as an input today. Private repositories
@@ -178,7 +179,7 @@ BibTeX:
 ```bibtex
 @software{hoffmann_2026_picasso,
   author    = {Hoffmann, Matheus},
-  title     = {{picasso: self-contained Nix flakes for scientific and agentic toolchains, and the NixOS workstation they run on}},
+  title     = {{picasso: self-contained Nix flakes that pin scientific, publishing and agentic toolchains}},
   year      = {2026},
   publisher = {Zenodo},
   doi       = {10.5281/zenodo.23311208},
@@ -188,11 +189,11 @@ BibTeX:
 
 APA:
 
-> Hoffmann, M. (2026). *picasso: self-contained Nix flakes for scientific and agentic toolchains, and the NixOS workstation they run on* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23311208
+> Hoffmann, M. (2026). *picasso: self-contained Nix flakes that pin scientific, publishing and agentic toolchains* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23311208
 
 ABNT (NBR 6023):
 
-> HOFFMANN, Matheus. **picasso**: self-contained Nix flakes for scientific and agentic toolchains, and the NixOS workstation they run on. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23311208.
+> HOFFMANN, Matheus. **picasso**: self-contained Nix flakes that pin scientific, publishing and agentic toolchains. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23311208.
 
 <!-- citation:end -->
 
@@ -200,6 +201,19 @@ ABNT (NBR 6023):
 **History.** Started on 2024-12-30 as `nix-config`, renamed picasso on 2026-10-12. Every change, era by era, is
 on [the site](https://h0ffmann.github.io/picasso/) (`just history` in `site/` writes
 `site/static/history.json`).
+
+## Related work
+
+The works that picasso builds on or that study the same problem: functional package management,
+deterministic builds and the software supply chain. `.zenodo.json` lists them, so Zenodo indexes them.
+
+- Dolstra, E., Löh, A. (2008). [NixOS: A purely functional Linux distribution](https://doi.org/10.1145/1411204.1411255). ICFP 2008. Journal version with Pierron, A. (2010): [doi:10.1017/S0956796810000195](https://doi.org/10.1017/S0956796810000195).
+- Dolstra, E. (2006). [The Purely Functional Software Deployment Model](https://edolstra.github.io/pubs/phd-thesis.pdf). PhD thesis, Utrecht University.
+- Dolstra, E., de Jonge, M., Visser, E. (2004). [Nix: A Safe and Policy-Free System for Software Deployment](https://www.usenix.org/legacy/event/lisa04/tech/dolstra.html). LISA 2004.
+- Courtès, L. (2013). [Functional Package Management with Guix](https://doi.org/10.48550/arXiv.1305.4584). arXiv:1305.4584.
+- Lamb, C., Zacchiroli, S. (2022). [Reproducible Builds: Increasing the Integrity of Software Supply Chains](https://doi.org/10.1109/MS.2021.3073045). IEEE Software.
+- Malka, J., Zacchiroli, S., Zimmermann, T. (2024). [Reproducibility of Build Environments through Space and Time](https://doi.org/10.1145/3639476.3639767). ICSE-NIER 2024.
+- Malka, J., Zacchiroli, S., Zimmermann, T. (2025). [Does Functional Package Management Enable Reproducible Builds at Scale? Yes](https://doi.org/10.48550/arXiv.2501.15919). arXiv:2501.15919.
 
 ## Credits
 
