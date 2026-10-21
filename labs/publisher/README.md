@@ -93,7 +93,7 @@ both = publisher.lib.${system}.mkDocument {
 The build fails when the command produced none of the requested formats, so a silently empty
 release is not possible. docx is pandoc's own writer: no TeX runs, the LaTeX template and the
 badge filter do not apply, and styling comes from a `--reference-doc` the consumer supplies.
-`checks.docx` builds `example/build-docx.sh`, which asserts the result really is a Word document
+`checks.docx` builds `packages.smoke-docx`, whose command asserts the result really is a Word document
 (a `word/document.xml` part) carrying the sample's text and its citation.
 
 `lib.${system}` also exposes `tex`, `python` and `tools` for shells that need only a part.
