@@ -7,4 +7,4 @@ license = "AGPL-3.0-only"
 
 [dependencies]
 serde_json = "1"
-ureq = "2"
+ureq = "3"

@@ -4,8 +4,6 @@
 name: citation
 
 on:
-  pull_request:
-    paths: [CITATION.cff, .zenodo.json, tools/citation/**]
   push:
     branches: [main]
     paths: [CITATION.cff, .zenodo.json, tools/citation/**]

@@ -9,4 +9,4 @@ description = "ouroboric-sharingan's licence scanner and benchmark runner"
 regex = "1"
 serde = "1"
 serde_json = { version = "1", features = ["preserve_order"] }
-toml = { version = "0.8", default-features = false, features = ["parse"] }
+toml = { version = "1", default-features = false, features = ["parse", "serde", "std"] }

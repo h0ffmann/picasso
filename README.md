@@ -122,9 +122,10 @@ without a major bump (a minor bump before 1.0.0): the consumers break on their n
 
 ## CI
 
-GitHub-hosted runners only. [`ci.yml`](.github/workflows/ci.yml) checks that the legacy root
-evaluates; builds every lab (`nix flake check` with the lock required current, every `checks.*`
-output built) and lints it (`nixpkgs-fmt`, `statix`, `deadnix`, `shellcheck`, justfile parse,
+GitHub-hosted runners only. [`ci.yml`](.github/workflows/ci.yml) runs on a push to `main` and on
+`workflow_dispatch`, not on pull requests: run the gate locally before a PR. It checks that the
+legacy root evaluates; builds every lab (`nix flake check` with the lock required current, every
+`checks.*` output built; `ptbr-pdf`, which compiles Typst, only on `workflow_dispatch`) and lints it (`nixpkgs-fmt`, `statix`, `deadnix`, `shellcheck`, justfile parse,
 self-tests); runs the site rules (`just ci` in `site/`: format, tests, build and `site-check`);
 parses every justfile with Ubuntu 24.04's `just` 1.21; runs `reuse lint`, `actionlint` and the
 `citation` check. [`release.yml`](.github/workflows/release.yml) and
@@ -170,7 +171,9 @@ Each release from v0.1.1 is archived on [Zenodo](https://zenodo.org/), which giv
 the concept DOI, [10.5281/zenodo.23311208](https://doi.org/10.5281/zenodo.23311208), which always resolves to the latest
 version. GitHub's **Cite this repository** button exports APA and BibTeX from
 [`CITATION.cff`](CITATION.cff). `just citation` makes that file and the block below from
-[`.zenodo.json`](.zenodo.json).
+[`.zenodo.json`](.zenodo.json). Each version also has its own DOI: v0.2.0 is
+[10.5281/zenodo.23524112](https://doi.org/10.5281/zenodo.23524112), v0.1.1 is
+[10.5281/zenodo.23311209](https://doi.org/10.5281/zenodo.23311209).
 
 <!-- citation:start -->
 
@@ -247,9 +250,9 @@ picasso uses the same licences as the [ouroboric-dev](https://github.com/ourobor
 [`REUSE.toml`](REUSE.toml) says which licence and which copyright holder apply to each file, so no
 file carries a header; [`LICENSES/`](LICENSES) has every licence text, and CI runs `reuse lint`.
 
-Releases up to and including v0.1.1 ([10.5281/zenodo.23311208](https://doi.org/10.5281/zenodo.23311208))
+Releases up to and including v0.1.1 ([10.5281/zenodo.23311209](https://doi.org/10.5281/zenodo.23311209))
 were published under MIT, and those copies stay under MIT. The AGPL-3.0 and CC BY 4.0 terms apply
-from the next release. What is not mine, and under which terms:
+from v0.2.0 ([10.5281/zenodo.23524112](https://doi.org/10.5281/zenodo.23524112)). What is not mine, and under which terms:
 
 | What | Whose | Terms |
 |---|---|---|
