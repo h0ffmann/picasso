@@ -265,9 +265,9 @@ rules. A breaking change to a lab's exported shape is a major bump (a minor bump
 - `release.yml` makes the GitHub release and starts `pages.yml` on `main`. The site's changelog
   comes from the tags (`site/releases.py`) at build time. Do not commit a changelog file.
 - `PICASSOPAPER.pdf` is the original, coloured paper: the output of
-  `docs/whitepapers/determinism-2026/render.mjs` from `whitepaper.html`. `WHITEPAPER.md` is the same
+  `just render paper` (`tools/render`) from `docs/whitepapers/determinism-2026/whitepaper.html`. `WHITEPAPER.md` is the same
   paper in ASD-STE100 (two `/ste100` passes, logged in that directory's `STE100.md`), and
-  `render-ste.mjs` prints it to `WHITEPAPER.pdf`. If you change a fact in `whitepaper.html`, change
+  `just render ste` prints it to `WHITEPAPER.pdf`. If you change a fact in `whitepaper.html`, change
   it in `WHITEPAPER.md` in the same PR, and render the two PDFs again.
 - Every PDF in the repository has a row in the README's **Papers** table: the PDF, its source and one
   line on what it is. A PR that adds, moves or removes a PDF changes that table too.
