@@ -28,21 +28,30 @@ fn api(
     body: Option<Value>,
     raw: Option<Vec<u8>>,
 ) -> Result<Value, String> {
-    let req = ureq::request(method, &format!("{base}{path}"))
-        .set("Authorization", &format!("Bearer {token}"));
+    let req = ureq::http::Request::builder()
+        .method(method)
+        .uri(format!("{base}{path}"))
+        .header("Authorization", format!("Bearer {token}"));
     let res = match (raw, body) {
         (Some(bytes), _) => req
-            .set("Content-Type", "application/octet-stream")
-            .send_bytes(&bytes),
+            .header("Content-Type", "application/octet-stream")
+            .body(bytes)
+            .map(ureq::run),
         (None, Some(b)) => req
-            .set("Content-Type", "application/json")
-            .send_string(&b.to_string()),
-        (None, None) => req.set("Content-Type", "application/json").call(),
+            .header("Content-Type", "application/json")
+            .body(b.to_string())
+            .map(ureq::run),
+        (None, None) => req
+            .header("Content-Type", "application/json")
+            .body(())
+            .map(ureq::run),
     };
     // the error text never includes the request headers, so the token stays out of the logs
     let text = res
         .map_err(|e| e.to_string())?
-        .into_string()
+        .map_err(|e| e.to_string())?
+        .into_body()
+        .read_to_string()
         .map_err(|e| e.to_string())?;
     if text.trim().is_empty() {
         Ok(json!({}))
