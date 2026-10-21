@@ -1,0 +1,11 @@
+[package]
+name = "site-releases"
+version = "0.1.0"
+edition = "2024"
+description = "Writes the site's releases module (version, changelog, Zenodo DOIs) from the v* git tags"
+license = "MIT"
+
+[dependencies]
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

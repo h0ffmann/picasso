@@ -21,7 +21,7 @@ fn prerendered() -> String {
   app.initial() |> app.view |> page.document |> element.to_document_string
 }
 
-// The hard rule (AGENTS.md), checked again on the built page by check.py.
+// The hard rule (AGENTS.md), checked again on the built page by site-check.
 pub fn logos_and_credit_are_on_the_page_test() {
   let html = prerendered()
   assert string.contains(html, family.marola_logo)
