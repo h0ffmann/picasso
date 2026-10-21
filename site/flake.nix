@@ -17,7 +17,7 @@
         nodejs # gleam test and the prerender run on node
         esbuild
         just
-        python3 # just serve
+        miniserve # just serve
         curl # site-releases asks Zenodo for the version DOIs
       ];
     in

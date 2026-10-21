@@ -29,7 +29,7 @@ ci:
 
 # Build and serve on http://localhost:8000
 serve: build
-    python3 -m http.server -d dist 8000
+    miniserve --index index.html -p 8000 dist
 
 # Rewrite static/history.json from a full clone (history.nix; Nix cannot run git, so it reads the log)
 history:

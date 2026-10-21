@@ -10,7 +10,7 @@ bundled by esbuild. The toolchain comes from this directory's `flake.nix`; the H
 pinned by checksum in `manifest.toml`. No token, no server.
 
 ```console
-nix develop          # gleam, node, esbuild, just, python3
+nix develop          # gleam, node, esbuild, just, miniserve
 just build           # dist/: app.js, the prerendered index.html, static/ copied in
 just test            # unit tests, on node
 just ci              # format check, tests, build, site-check: what CI and the deploy run
