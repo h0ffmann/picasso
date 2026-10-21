@@ -208,3 +208,13 @@ render which:
       *) echo "usage: just render study|paper|ste" >&2; exit 1 ;;
     esac
     nix shell $P#chromium $P#pandoc -c env CHROMIUM=chromium nix run ./tools#render -- "${a[@]}"
+
+
+# create or update the GitHub labels from the tables of LABEL.md (idempotent; needs `gh` logged in)
+labels:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    grep -E '^\| `[^`]+` \| `#[0-9A-Fa-f]{6}` \|' LABEL.md | while IFS='|' read -r _ n c d _; do
+      n=${n//\`/}; c=${c//\`/}; n=${n// /}; c=${c// /}; d=${d# }; d=${d% }
+      gh label create "$n" --color "${c#\#}" --description "$d" --force
+    done
