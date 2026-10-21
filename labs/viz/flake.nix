@@ -20,24 +20,46 @@
         postBuild = "wrapProgram $out/bin/graphify --set-default PYTHONHASHSEED 0";
       };
 
-      # graphify is baked in rather than listed in runtimeInputs, which would shadow the self-test's fake.
-      vizFor = pkgs: pkgs.writeShellApplication {
-        name = "viz";
-        runtimeInputs = [ pkgs.coreutils pkgs.git ];
-        text = builtins.replaceStrings [ "@graphify@" ] [ "${graphifyFor pkgs}/bin/graphify" ] (builtins.readFile ./scripts/viz);
-        meta.license = lib.licenses.agpl3Only;
+      src = lib.fileset.toSource {
+        root = ./tools;
+        fileset = lib.fileset.unions [ ./tools/Cargo.toml ./tools/Cargo.lock ./tools/src ];
       };
+
+      # viz (tools/): graphify is baked in at compile time (GRAPHIFY) rather than looked up on PATH;
+      # git is the one host command it calls. The tests run in the build (checkPhase).
+      vizFor = pkgs: pkgs.rustPlatform.buildRustPackage {
+        pname = "viz";
+        version = "0.1.0";
+        inherit src;
+        cargoLock.lockFile = ./tools/Cargo.lock;
+        env.GRAPHIFY = "${graphifyFor pkgs}/bin/graphify";
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postInstall = "wrapProgram $out/bin/viz --prefix PATH : ${lib.makeBinPath [ pkgs.git ]}";
+        meta = { mainProgram = "viz"; license = lib.licenses.agpl3Only; };
+      };
+
+      # Same sources, `cargo clippy -D warnings`.
+      clippyFor = pkgs: (vizFor pkgs).overrideAttrs (old: {
+        pname = "viz-clippy";
+        nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.clippy ];
+        buildPhase = "cargo clippy --release --all-targets --offline -- -D warnings";
+        doCheck = false;
+        installPhase = "touch $out";
+      });
 
       toolsFor = pkgs: [ (graphifyFor pkgs) (vizFor pkgs) ];
 
       # `nix flake check` builds this: graphify graphs example/ in the sandbox, with no network.
-      smokeFor = pkgs: pkgs.runCommand "viz-smoke" { nativeBuildInputs = toolsFor pkgs; } ''
+      smokeFor = pkgs: pkgs.runCommand "viz-smoke" { nativeBuildInputs = toolsFor pkgs ++ [ pkgs.jq ]; } ''
         export HOME=$TMPDIR VIZ_OUT=$TMPDIR/graph
         cp -r ${./example} example && chmod -R u+w example
         viz build example
         test -s "$VIZ_OUT/graph.json" && test -s "$VIZ_OUT/graph.html"
         viz query "greet" | tee query.txt
         grep -q greet query.txt
+        # example/greet.rs calls shout() from shout.rs: the graph must hold that call and the import
+        jq -e '(.links // .edges)[] | select(.relation == "calls" and .source == "greet_greet" and .target == "shout_shout")' "$VIZ_OUT/graph.json" > /dev/null
+        jq -e '(.links // .edges)[] | select(.relation == "imports_from" and .source == "greet" and .target == "shout")' "$VIZ_OUT/graph.json" > /dev/null
         mkdir -p "$out" && cp "$VIZ_OUT/graph.json" "$VIZ_OUT/graph.html" query.txt "$out"/
       '';
 
@@ -63,7 +85,7 @@
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {
           name = "viz";
-          packages = toolsFor pkgs;
+          packages = toolsFor pkgs ++ [ pkgs.cargo pkgs.rustc pkgs.clippy ];
           shellHook = ''echo "viz: graphify ${pkgs.graphify.version} | viz build, viz query \"<q>\""'';
         };
       });
@@ -77,9 +99,8 @@
 
       checks = forAll (pkgs: {
         lab-json = labCardFor pkgs;
-        viz = pkgs.runCommand "viz-self-test" { } ''
-          ${vizFor pkgs}/bin/viz --self-test | tee "$out"
-        '';
+        viz = vizFor pkgs; # building it runs its `cargo test`
+        clippy = clippyFor pkgs;
         smoke = self.packages.${pkgs.stdenv.hostPlatform.system}.smoke;
       });
     };

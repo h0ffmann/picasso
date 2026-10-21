@@ -1,0 +1,10 @@
+[package]
+name = "cuda-tools"
+version = "0.1.0"
+edition = "2021"
+description = "setup-cuda-cache and setup-ml-venv: host setup for a CUDA box"
+license = "AGPL-3.0-only"
+publish = false
+
+[profile.release]
+strip = true

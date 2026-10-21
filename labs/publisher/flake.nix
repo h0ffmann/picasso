@@ -146,13 +146,64 @@
         smoke = mkPdfFor pkgs {
           name = "publisher-smoke";
           src = ./example;
-          command = "bash build.sh";
+          # the same sample through both engines this lab supports, then the lualatex badges
+          command = ''
+            here=$PWD build=$OUT_DIR
+            common=(--citeproc --bibliography "$here/refs.bib" --fail-if-warnings)
+            # xelatex: unicode symbols via DejaVu Sans loaded by filename (no fontconfig in the sandbox)
+            pandoc "$here/smoke.md" "''${common[@]}" --pdf-engine=xelatex \
+              -V mainfont=DejaVuSans -V mainfontoptions="Extension=.ttf" -V monofont=DejaVuSansMono -V monofontoptions="Extension=.ttf" \
+              -o "$build/smoke-xelatex.pdf"
+            # pdflatex: T1/utf8 path (the UFRJ proposal template); strip the symbols it cannot encode
+            sed 's/⚠ ✔ → ≥/(simbolos omitidos em pdflatex)/' "$here/smoke.md" > "$build/smoke-pdflatex.md"
+            pandoc "$build/smoke-pdflatex.md" "''${common[@]}" --pdf-engine=pdflatex -o "$build/smoke-pdflatex.pdf"
+            rm -f "$build/smoke-pdflatex.md"
+            # lualatex: shields badges → TikZ pills through the filter, color emoji through the fallback font,
+            # Japanese through luatexja. Two explicit steps (pandoc → .tex, lualatex → .pdf) so a TeX failure
+            # shows its own log here instead of pandoc's one-line summary.
+            pandoc "$here/badges.md" --from markdown+raw_html --to latex --standalone --fail-if-warnings \
+              --lua-filter "$PUBLISHER_FILTERS/shields-badges.lua" -H "$here/badges-preamble.tex" \
+              -o "$build/badges-lualatex.tex"
+            if ! (cd "$build" && lualatex -interaction=nonstopmode -halt-on-error badges-lualatex.tex > badges-lualatex.stdout 2>&1); then
+              echo "badges-lualatex.tex: lualatex failed; log tail:" >&2
+              tail -n 60 "$build/badges-lualatex.log" >&2
+              exit 1
+            fi
+            if grep -q 'Missing character' "$build/badges-lualatex.log"; then
+              echo "badges-lualatex.pdf: glyphs missing (a font lacks a character that should have a fallback):" >&2
+              grep 'Missing character' "$build/badges-lualatex.log" | sort -u | head >&2
+              exit 1
+            fi
+            rm -f "$build"/badges-lualatex.{aux,out,stdout}
+            # luaotfload embeds color emoji as bitmap images (one image + soft mask each); badges.md has four
+            # SMP emoji. ☁ ❄ are BMP symbols DejaVu Sans itself has, so they stay monochrome (no fallback).
+            emoji="$(pdfimages -list "$build/badges-lualatex.pdf" | awk 'NR>2 && $3=="image"' | wc -l)"
+            [ "$emoji" -ge 4 ] || { echo "badges-lualatex.pdf: expected 4 color emoji bitmaps, found $emoji" >&2; exit 1; }
+            # Japanese text must survive as text (luatexja + Harano Aji Gothic), not tofu
+            pdftotext "$build/badges-lualatex.pdf" - | grep -q '決済処理と不正対策' || { echo "badges-lualatex.pdf: Japanese text missing" >&2; exit 1; }
+            pdffonts "$build/badges-lualatex.pdf" | grep -q 'HaranoAjiGothic' || { echo "badges-lualatex.pdf: Harano Aji Gothic not embedded" >&2; exit 1; }
+            echo "publisher smoke: $build/smoke-xelatex.pdf $build/smoke-pdflatex.pdf $build/badges-lualatex.pdf"
+          '';
         };
         # The same sample as .docx: pandoc's docx writer, no TeX in the path.
         smoke-docx = mkDocxFor pkgs {
           name = "publisher-smoke-docx";
           src = ./example;
-          command = "bash build-docx.sh";
+          # no TeX in the path: docx is what a consumer asks for to edit or comment in Word or Google Docs
+          command = ''
+            pandoc smoke.md --citeproc --bibliography refs.bib --fail-if-warnings -o "$OUT_DIR/smoke.docx"
+            # A .docx is a zip of XML parts. Prove the writer produced a real document part and that the
+            # sample's text survived, so a broken pandoc build fails here and not in a consumer's release.
+            unzip=${pkgs.unzip}/bin/unzip
+            parts="$("$unzip" -Z1 "$OUT_DIR/smoke.docx")"
+            grep -qx word/document.xml <<<"$parts" || { echo "word/document.xml missing: $parts" >&2; exit 1; }
+            xml="$("$unzip" -p "$OUT_DIR/smoke.docx" word/document.xml)"
+            for expected in hifenização WAVEWATCH; do
+              grep -qF "$expected" <<<"$xml" || { echo "$expected missing from word/document.xml" >&2; exit 1; }
+            done
+            echo "docx ok: $(wc -l <<<"$parts") parts"
+            echo "publisher docx smoke: $OUT_DIR/smoke.docx"
+          '';
         };
       });
 
@@ -162,7 +213,7 @@
         lab-json = labCardFor pkgs;
         smoke = self.packages.${pkgs.system}.smoke;
         # docx is optional for consumers but not untested here: the writer must produce a real
-        # document part with the sample's text and citation in it (example/build-docx.sh).
+        # document part with the sample's text and citation in it (the smoke-docx command).
         docx = self.packages.${pkgs.system}.smoke-docx;
         # The shields filter alone, to LaTeX source: exact \badge macros for every badge shape.
         filter = pkgs.runCommand "publisher-filter-check" ({ nativeBuildInputs = [ pkgs.pandoc ]; } // envFor pkgs) ''

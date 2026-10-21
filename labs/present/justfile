@@ -10,9 +10,9 @@ default:
 shell:
     nix develop "{{here}}"
 
-# Run the script's --self-test from source (what CI runs before the flake check).
+# Run cam's tests (`cargo test` in tools/; CI builds them as the cam flake check).
 self-test:
-    "{{here}}/scripts/cam" --self-test
+    nix develop "{{here}}" --command cargo test --manifest-path "{{here}}/tools/Cargo.toml"
 
 # Print the exact tool versions this lab pins (builds checks.versions in the sandbox).
 versions:
@@ -46,7 +46,7 @@ gif file:
 # Webcam controls: `just cam show`, `just cam set brightness=140`, `just cam save meeting`, `just cam load meeting`.
 [no-cd]
 cam *args:
-    "{{here}}/scripts/cam" {{args}}
+    nix run "{{here}}#cam" -- {{args}}
 
 # Every V4L2 control of the default camera in a GUI, with presets (cameractrls).
 [no-cd]
