@@ -79,3 +79,14 @@ cursor" is the zero-install answer there.
 `lib.<system>.tools` is the list (desktop tools only on Linux), `lib.<system>.scripts.cam` and
 `packages.<system>.cam` the program, `packages.<system>.<tool>` each tool for `nix run`, and
 `checks.<system>.{cam, versions}` what `nix flake check` builds.
+
+## What it pins
+
+| Type       | Program |
+| :--------- | :-----: |
+| Annotate   | [gromit-mpx](https://github.com/bk138/gromit-mpx), [find-cursor](https://github.com/arp242/find-cursor), [screenkey](https://gitlab.com/screenkey/screenkey) / [wshowkeys](https://git.sr.ht/~sircmpwn/wshowkeys) |
+| Capture    | [flameshot](https://flameshot.org/), [grim](https://sr.ht/~emersion/grim/) + [slurp](https://github.com/emersion/slurp) + [satty](https://github.com/gabm/Satty) |
+| Record     | [wf-recorder](https://github.com/ammen99/wf-recorder), [kooha](https://github.com/SeaDve/Kooha), [OBS Studio](https://obsproject.com/), [ffmpeg](https://ffmpeg.org/) + [gifski](https://gif.ski/) |
+| Webcam     | [v4l-utils](https://linuxtv.org/wiki/index.php/V4l-utils) + `cam` (save / load / reset profiles), [cameractrls](https://github.com/soyersoyer/cameractrls), [guvcview](https://guvcview.sourceforge.net/) |
+| Present    | [pdfpc](https://pdfpc.github.io/), [presenterm](https://github.com/mfontanini/presenterm) |
+| Reuse      | `lib.<system>.{tools, scripts}`, `packages.<system>.{cam, <tool>}`, `checks.<system>.{cam, versions}` |

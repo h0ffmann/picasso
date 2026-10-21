@@ -113,3 +113,14 @@ of `gh` and `ai-jail` on `PATH`, then clippy and rustfmt.
 
 First consumer: [marola](https://github.com/h0ffmann/marola). `labs/pratico` still carries its
 own copies of these tools and recipes; making it consume this lab is a follow-up.
+
+## What it pins
+
+| Type          | Program |
+| :------------ | :-----: |
+| Agent sandbox | [ai-jail](https://github.com/akitaonrails/ai-jail) (bubblewrap / Landlock / seccomp, Linux) |
+| Agents        | Claude Code (the consumer's own), [OpenCode](https://opencode.ai/) |
+| Reviewer      | [Open Code Review](https://github.com/alibaba/open-code-review) v1.12.7, `buildGoModule` from the tag — `jail-run ocr` gives it no token and a read-only project |
+| GitHub        | [gh](https://cli.github.com/); `gh-token` resolves the token on the host, `jail-run` forwards it as `GH_TOKEN` |
+| Clipboard     | `clip` (write-only, from inside the jail) → `clip-relay` → wl-copy / xclip |
+| Reuse         | `lib.<system>.{tools, env, scripts}`, `packages.<system>.{<tool>, ocr}`, `checks.<system>.{tools, clippy, fmt}` |

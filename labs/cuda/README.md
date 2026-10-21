@@ -35,3 +35,12 @@ is a manual step on the workstation.
 
 First consumer: [marola](https://github.com/h0ffmann/marola) — `just ml-venv` and
 `just gpu-cache-setup` there, and its `marola-sea-publish` workflow.
+
+## What it pins
+
+| Type         | Program |
+| :----------- | :-----: |
+| Binary cache | [cache.nixos-cuda.org](https://cache.nixos-cuda.org) via `extra-substituters` + `trusted-users` |
+| torch        | PyTorch's CUDA wheel index (`CUDA_INDEX`, default cu129), never nixpkgs' `torchWithCuda` |
+| Wrapper      | `$VENV_ROOT/bin/python-cuda` — nix libstdc++ baked in at build, driver libs linked at run |
+| Reuse        | `lib.x86_64-linux.tools`, `packages.x86_64-linux.{setup-cuda-cache,setup-ml-venv}`, `checks.x86_64-linux.*` |

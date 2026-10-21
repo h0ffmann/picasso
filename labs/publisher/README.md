@@ -131,3 +131,17 @@ repository with `action.yml` at the root); the subdirectory reference above is e
 — a complete, working caller: unit tests and a main-only translation step as `pre-build`,
 `commit` on pushes to `main`, `commit-paths` for the generated translations. Its
 [`flake.nix`](https://github.com/h0ffmann/ww-lab/blob/main/flake.nix) shows the `mkPdf` side.
+
+## What it pins
+
+| Type            | Program |
+| :-------------- | :-----: |
+| Converter       | [pandoc 3.7](https://pandoc.org/) (citeproc, Lua filters) |
+| TeX             | [TeX Live 2025](https://tug.org/texlive/) `texliveMedium` + babel-portuges, fontspec, DejaVu, fvextra, titlesec, … |
+| Engines         | `xelatex` (books, unicode fonts by filename) and `pdflatex` (T1 templates) |
+| Scripting       | python 3 + [openai](https://github.com/openai/openai-python) (translation against any OpenAI-compatible endpoint) |
+| PDF tools       | [poppler-utils](https://poppler.freedesktop.org/) (`pdfinfo`, `pdftotext`, `pdftoppm`), [librsvg](https://gitlab.gnome.org/GNOME/librsvg) (`rsvg-convert`, SVG images in PDFs) |
+| Badges & emoji  | `filters/shields-badges.lua` → `publisher-badges.sty` (shields.io badges as TikZ pills), [Noto Color Emoji](https://github.com/googlefonts/noto-emoji) via luaotfload fallback (`lualatex`) |
+| Japanese        | [luatexja](https://ctan.org/pkg/luatexja) + [Harano Aji](https://github.com/trueroad/HaranoAjiFonts) Gothic/Mincho (`lualatex`) |
+| Reuse           | `lib.<system>.{mkPdf, mkDocx, mkDocument}` and the composite GitHub Action `h0ffmann/picasso/labs/publisher@main` |
+| docx (optional) | pandoc's docx writer — no TeX, no LaTeX template, styling from a consumer's `--reference-doc` |

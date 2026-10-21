@@ -193,3 +193,20 @@ The host-side tools are one Rust crate, `tools/`, one binary each: `gh-token`, `
 tools-clippy, tools-fmt}` run the tests (against a fake `gh` and throwaway git repositories),
 clippy and rustfmt. `clip` finds the relay's FIFO under `$PRATICO_ROOT/.tmp` (the `clip` recipe
 sets it to this directory), else the current directory.
+
+## What it pins
+
+| Type              | Program |
+| :---------------- | :-----: |
+| Fortran / C / C++ | [GCC 15](https://gcc.gnu.org/) (`gfortran`) |
+| MPI               | [OpenMPI 5](https://www.open-mpi.org/) |
+| NetCDF            | [netcdf-c 4.10](https://www.unidata.ucar.edu/software/netcdf/) + netcdf-fortran, HDF5 |
+| Decomposition     | [METIS](https://github.com/KarypisLab/METIS) / ParMETIS, [PT-Scotch](https://gitlab.inria.fr/scotch/scotch) (static, for WW3's PDLIB) |
+| WW3 regtest data  | NOAA's `ww3_from_ftp` tarball, SHA-256 pinned (`ww3-regtest-data`) |
+| GRIB              | [ecCodes](https://confluence.ecmwf.int/display/ECC) |
+| C++ portability   | [Kokkos](https://kokkos.org/) (Serial + OpenMP, CUDA in `just cuda`) + [GoogleTest](https://google.github.io/googletest/), gdb, valgrind |
+| Build             | [CMake](https://cmake.org/) / Ninja |
+| Analysis          | [nco](https://nco.sourceforge.net/), [cdo](https://code.mpimet.mpg.de/projects/cdo), python (numpy, scipy, xarray, netCDF4, matplotlib) |
+| Shell pilot       | [zsh-ai](https://github.com/thiswillbeyourgithub/zsh-ai) → [llm](https://llm.datasette.io/) → [Ollama](https://ollama.com/) (`qwen2.5-coder:7b`) |
+| Agent sandbox     | [ai-jail](https://github.com/akitaonrails/ai-jail) (bubblewrap / Landlock / seccomp) |
+| Task runner       | [just](https://github.com/casey/just) |
