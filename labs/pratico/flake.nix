@@ -185,6 +185,47 @@
         echo "ww3 toolchain: $(gfortran --version | head -1) | $(mpirun --version | head -1) | netcdf-c $(nc-config --version | cut -d' ' -f2) / netcdf-fortran $(nf-config --version | cut -d' ' -f2)"
       '';
 
+      # The host-side tools are one Rust crate (tools/), one binary each: gh-token, clip,
+      # clip-relay (the jail's clipboard and token bridge) and the two submodule tools for
+      # ww-lab. `cargo test` runs in the build, against fakes on PATH and throwaway git repos.
+      toolsSrc = lib.fileset.toSource {
+        root = ./tools;
+        fileset = lib.fileset.unions [ ./tools/Cargo.toml ./tools/Cargo.lock ./tools/src ./tools/tests ];
+      };
+      toolsFor = pkgs: pkgs.rustPlatform.buildRustPackage {
+        pname = "pratico-tools";
+        version = "0.1.0";
+        src = toolsSrc;
+        cargoLock.lockFile = ./tools/Cargo.lock;
+        nativeCheckInputs = [ pkgs.git ];
+        meta.license = lib.licenses.asl20;
+      };
+      # One package per binary. gh-token finds `gh` on the caller's PATH (the tests fake it).
+      wrapTool = pkgs: name: runtimeInputs: pkgs.runCommand name
+        {
+          nativeBuildInputs = [ pkgs.makeWrapper ];
+          meta = { mainProgram = name; license = lib.licenses.asl20; };
+        }
+        ''
+          makeWrapper ${toolsFor pkgs}/bin/${name} $out/bin/${name} ${lib.optionalString (runtimeInputs != [ ]) "--prefix PATH : ${lib.makeBinPath runtimeInputs}"}
+        '';
+      toolPackages = pkgs: {
+        gh-token = wrapTool pkgs "gh-token" [ ];
+        clip = wrapTool pkgs "clip" [ pkgs.coreutils ];
+        clip-relay = wrapTool pkgs "clip-relay" [ pkgs.coreutils ];
+        ww-lab-submodule = wrapTool pkgs "ww-lab-submodule" [ pkgs.git ];
+        ww3-submodule = wrapTool pkgs "ww3-submodule" [ pkgs.git ];
+      };
+      # All five on one PATH: what the jail recipes and the dev shell put in front.
+      toolsEnvFor = pkgs: pkgs.symlinkJoin { name = "pratico-tools-env"; paths = lib.attrValues (toolPackages pkgs); };
+      clippyFor = pkgs: (toolsFor pkgs).overrideAttrs (old: {
+        pname = "pratico-tools-clippy";
+        nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.clippy ];
+        buildPhase = "cargo clippy --release --all-targets --offline -- -D warnings";
+        doCheck = false;
+        installPhase = "touch $out";
+      });
+
       # lab.json, the card the profile README renders: its shape is asserted at evaluation, and the
       # build writes each headline attribute's version from this lab's own nixpkgs. Copied in every
       # lab, since a lab references nothing outside itself.
@@ -234,6 +275,7 @@
               pkgs.vale # ww3-gpu's `just vale` gate
               pkgs.shellcheck # ww3-gpu's shell gate
               pkgs.lychee # ww3-gpu's Markdown link gate (CI)
+              (toolsEnvFor pkgs) # gh-token, clip, clip-relay, ww-lab-submodule, ww3-submodule
             ] ++ lib.optionals isLinux [
               aiJail # bubblewrap/Landlock/seccomp — Linux only
               pkgs.bubblewrap
@@ -315,7 +357,8 @@
 
       # Built on demand, never by CI: the regtest data is a 327 MB download, and ww3-metis
       # compiles ParMETIS (AGENTS.md, Safety).
-      packages = forAll (pkgs: {
+      packages = forAll (pkgs: toolPackages pkgs // {
+        tools = toolsEnvFor pkgs;
         ptscotch-static = ptscotchStatic pkgs;
         ww3-metis = ww3Metis pkgs;
         ww3-regtest-data = ww3RegtestData pkgs;
@@ -327,6 +370,11 @@
       # shell that ww-lab will build WW3 in.
       checks = forAll (pkgs: {
         lab-json = labCardFor pkgs;
+        tools = toolsFor pkgs; # builds and runs cargo test
+        tools-clippy = clippyFor pkgs;
+        tools-fmt = pkgs.runCommand "pratico-tools-fmt" { nativeBuildInputs = [ pkgs.rustfmt ]; } ''
+          rustfmt --check --edition 2021 ${toolsSrc}/src/bin/*.rs ${toolsSrc}/src/git.rs ${toolsSrc}/tests/*.rs && touch $out
+        '';
         # The archives and headers WW3's cmake/FindSCOTCH.cmake looks for, by its own names.
         ptscotch = pkgs.runCommand "pratico-ptscotch-layout" { } ''
           for f in lib/libscotch.a lib/libptscotch.a lib/libscotcherr.a lib/libptscotcherr.a \

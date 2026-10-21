@@ -1,5 +1,5 @@
 {
-  description = "agentic — ai-jail, OpenCode, Open Code Review, gh, and the host-side scripts (gh-token, clip, clip-relay, jail-run) for running coding agents sandboxed";
+  description = "agentic — ai-jail, OpenCode, Open Code Review, gh, and the host-side tools (gh-token, clip, clip-relay, jail-run), written in Rust for running coding agents sandboxed";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -15,20 +15,35 @@
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       forAll = f: lib.genAttrs systems (s: f nixpkgs.legacyPackages.${s});
 
-      # One script file, run from source by CI and wrapped here for consumers. `runtimeInputs`
-      # never lists a tool the script's own --self-test fakes on PATH (the wrapper prepends
-      # runtimeInputs, which would shadow the fake): gh-token finds `gh` on the caller's PATH,
-      # jail-run finds `ai-jail` there.
-      script = pkgs: name: runtimeInputs: pkgs.writeShellApplication {
-        inherit name runtimeInputs;
-        text = builtins.readFile ./scripts/${name};
-        meta.license = pkgs.lib.licenses.agpl3Only;
+      # The tools are one Rust crate (tools/), one binary each. `cargo test` runs in the build, so a
+      # package that builds has passed its tests; the tests fake `gh` and `ai-jail` on PATH.
+      toolsSrc = lib.fileset.toSource {
+        root = ./tools;
+        fileset = lib.fileset.unions [ ./tools/Cargo.toml ./tools/Cargo.lock ./tools/src ./tools/tests ];
       };
+      toolsFor = pkgs: pkgs.rustPlatform.buildRustPackage {
+        pname = "agentic-tools";
+        version = "0.1.0";
+        src = toolsSrc;
+        cargoLock.lockFile = ./tools/Cargo.lock;
+        meta.license = lib.licenses.asl20;
+      };
+
+      # One package per binary, named as before. `runtimeInputs` never lists a tool the tests fake
+      # on PATH: gh-token finds `gh` on the caller's PATH, jail-run finds `ai-jail` there.
+      wrap = pkgs: name: runtimeInputs: pkgs.runCommand name
+        {
+          nativeBuildInputs = [ pkgs.makeWrapper ];
+          meta = { mainProgram = name; license = lib.licenses.asl20; };
+        }
+        ''
+          makeWrapper ${toolsFor pkgs}/bin/${name} $out/bin/${name} ${lib.optionalString (runtimeInputs != [ ]) "--prefix PATH : ${lib.makeBinPath runtimeInputs}"}
+        '';
       scriptsFor = pkgs: rec {
-        gh-token = script pkgs "gh-token" [ ];
-        clip = script pkgs "clip" [ pkgs.coreutils ];
-        clip-relay = script pkgs "clip-relay" [ pkgs.coreutils ];
-        jail-run = script pkgs "jail-run" [ gh-token clip-relay ];
+        gh-token = wrap pkgs "gh-token" [ ];
+        clip = wrap pkgs "clip" [ pkgs.coreutils ];
+        clip-relay = wrap pkgs "clip-relay" [ pkgs.coreutils ];
+        jail-run = wrap pkgs "jail-run" [ gh-token clip-relay pkgs.coreutils ];
       };
 
       # ai-jail's test suite needs a working sandbox at build time, which the Nix build sandbox
@@ -65,7 +80,7 @@
         };
       };
 
-      toolsFor = pkgs:
+      toolListFor = pkgs:
         let s = scriptsFor pkgs; in
         [ pkgs.gh pkgs.opencode (ocrFor pkgs) s.gh-token s.clip ]
         ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
@@ -82,9 +97,14 @@
         BWRAP_BIN = "${pkgs.bubblewrap}/bin/bwrap";
       };
 
-      selfTest = pkgs: drv: pkgs.runCommand "${drv.name}-self-test" { } ''
-        ${drv}/bin/${drv.name} --self-test | tee "$out"
-      '';
+      # Same sources, `cargo clippy -D warnings` as the build.
+      clippyFor = pkgs: (toolsFor pkgs).overrideAttrs (old: {
+        pname = "agentic-tools-clippy";
+        nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.clippy ];
+        buildPhase = "cargo clippy --release --all-targets --offline -- -D warnings";
+        doCheck = false;
+        installPhase = "touch $out";
+      });
 
       # lab.json, the card the profile README renders: its shape is asserted at evaluation, and the
       # build writes each headline attribute's version from this lab's own nixpkgs. Copied in every
@@ -102,7 +122,7 @@
     in
     {
       lib = forAll (pkgs: {
-        tools = toolsFor pkgs;
+        tools = toolListFor pkgs;
         env = envFor pkgs;
         scripts = scriptsFor pkgs;
       });
@@ -112,19 +132,20 @@
       devShells = forAll (pkgs: {
         default = pkgs.mkShell ({
           name = "agentic";
-          packages = toolsFor pkgs;
+          packages = toolListFor pkgs;
           shellHook = ''echo "agentic: gh $(gh --version | head -1 | cut -d' ' -f3) | ocr ${ocrVersion} | $(command -v ai-jail >/dev/null && echo ai-jail || echo 'ai-jail: Linux only') | jail-run claude|opencode|ocr from a directory with .ai-jail"'';
         } // envFor pkgs);
       });
 
-      # Built by `nix flake check`: the scripts' own --self-test runs, in the sandbox, against
-      # fakes on PATH — no gh login, no ai-jail, no display needed.
-      checks = forAll (pkgs:
-        let s = scriptsFor pkgs; in
-        {
-          gh-token = selfTest pkgs s.gh-token;
-          jail-run = selfTest pkgs s.jail-run;
-          lab-json = labCardFor pkgs;
-        });
+      # Built by `nix flake check`: the crate's tests run in the sandbox against fakes on PATH (no
+      # gh login, no ai-jail, no display needed), then clippy and rustfmt over the same sources.
+      checks = forAll (pkgs: {
+        tools = toolsFor pkgs; # builds and runs cargo test
+        clippy = clippyFor pkgs;
+        fmt = pkgs.runCommand "agentic-tools-fmt" { nativeBuildInputs = [ pkgs.rustfmt ]; } ''
+          rustfmt --check --edition 2021 ${toolsSrc}/src/bin/*.rs ${toolsSrc}/tests/*.rs && touch $out
+        '';
+        lab-json = labCardFor pkgs;
+      });
     };
 }

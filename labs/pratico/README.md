@@ -63,20 +63,20 @@ of `ww3RegtestData` in `flake.nix` in the same PR as the consumer's WW3 bump.
 
 ### Using it from ww-lab
 
-Git cannot submodule a subdirectory, so `scripts/ww-lab-submodule.sh` adds nix-config as a
-shallow submodule and sparse-checks-out only `labs/pratico`. It is idempotent: one script for
+Git cannot submodule a subdirectory, so `ww-lab-submodule` (a Rust binary, `packages.${system}.ww-lab-submodule`) adds nix-config as a
+shallow submodule and sparse-checks-out only `labs/pratico`. It is idempotent: one tool for
 the first add, for every fresh clone (sparse-checkout is local state), and for bumps.
 
 ```
 # first time, from anywhere (run it out of a nix-config checkout)
-labs/pratico/scripts/ww-lab-submodule.sh ~/code/ww-lab --commit
+nix run ./labs/pratico#ww-lab-submodule -- ~/code/ww-lab --commit
 
 # fresh clone of ww-lab: materialise the sparse submodule
 git clone --recurse-submodules git@github.com:h0ffmann/ww-lab.git && cd ww-lab
-nix-config/labs/pratico/scripts/ww-lab-submodule.sh .      # or: git -C nix-config sparse-checkout set --no-cone /labs/pratico/
+nix run ./nix-config/labs/pratico#ww-lab-submodule -- .      # or: git -C nix-config sparse-checkout set --no-cone /labs/pratico/
 
 # move the pin to the latest origin/main and commit it
-nix-config/labs/pratico/scripts/ww-lab-submodule.sh . --bump --commit
+nix run ./nix-config/labs/pratico#ww-lab-submodule -- . --bump --commit
 ```
 
 `--branch <name>` tracks a branch instead of `main` (useful before a PR merges); `--url` and
@@ -89,13 +89,13 @@ just -f nix-config/labs/pratico/justfile toolchain      # record the versions wi
 ```
 
 **WW3 itself** goes into ww-lab the same way, through your fork of NOAA-EMC/WW3, with
-`scripts/ww3-submodule.sh`. The fork is what ww-lab pins; upstream is added as a second
+`ww3-submodule`. The fork is what ww-lab pins; upstream is added as a second
 remote inside the submodule so the fork can follow it and pick up upstream pull requests:
 
 ```
-nix-config/labs/pratico/scripts/ww3-submodule.sh . --commit                  # add h0ffmann/WW3 as ./WW3 (branch develop)
-nix-config/labs/pratico/scripts/ww3-submodule.sh . --sync --push --bump --commit   # fork <- upstream/develop, push, re-pin
-nix-config/labs/pratico/scripts/ww3-submodule.sh . --pr 1234 --commit        # pin ww-lab to upstream PR #1234 before it merges
+nix run ./nix-config/labs/pratico#ww3-submodule -- . --commit                  # add h0ffmann/WW3 as ./WW3 (branch develop)
+nix run ./nix-config/labs/pratico#ww3-submodule -- . --sync --push --bump --commit   # fork <- upstream/develop, push, re-pin
+nix run ./nix-config/labs/pratico#ww3-submodule -- . --pr 1234 --commit        # pin ww-lab to upstream PR #1234 before it merges
 ```
 
 `--sync` fast-forwards only; if the fork carries its own commits, add `--merge`. `--fork`,
@@ -178,7 +178,7 @@ the same model so `llm` and the plugin agree.
 ## ai-jail
 
 `.ai-jail` is the committed project policy (it can only tighten). Per-machine trust goes in
-`~/.ai-jail`. Recipes forward the host's GitHub token (`scripts/gh-token.sh`) because
+`~/.ai-jail`. Recipes forward the host's GitHub token (`gh-token`) because
 `~/.config/gh` is deliberately not mapped into the jail. `PRATICO_JAIL_CLIPBOARD=1` starts a
 write-only clipboard relay so `just clip` works from inside.
 
@@ -186,3 +186,10 @@ write-only clipboard relay so `just clip` works from inside.
 
 Self-contained on purpose: no reference to the parent flake, every recipe anchored on
 `justfile_directory()`, so it works unchanged with nix-config as a git submodule.
+
+The host-side tools are one Rust crate, `tools/`, one binary each: `gh-token`, `clip`,
+`clip-relay`, `ww-lab-submodule` and `ww3-submodule` (`packages.${system}.<tool>`, all five on one
+`PATH` as `packages.${system}.tools`, which `nix develop` puts in front). `checks.${system}.{tools,
+tools-clippy, tools-fmt}` run the tests (against a fake `gh` and throwaway git repositories),
+clippy and rustfmt. `clip` finds the relay's FIFO under `$PRATICO_ROOT/.tmp` (the `clip` recipe
+sets it to this directory), else the current directory.
