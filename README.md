@@ -24,6 +24,40 @@ Built on [Gabriel Volpe's `nix-config`](https://github.com/gvolpe/nix-config), a
 [his repository is better anyway](https://github.com/gvolpe/nix-config): read it first.
 </div>
 
+## Who uses picasso
+
+Checked on 2026-10-21 against each repository's default branch (`flake.nix`, `flake.lock`,
+`.gitmodules`, workflows). A flake input follows `main` until its `flake.lock` moves; the
+revision is what the lock (or the submodule) holds now. `nix-config` is picasso's old name: GitHub
+redirects it, and the repositories marked so still write it.
+
+| Repository | Lab | How | Where | Pinned at |
+|---|---|---|---|---|
+| [h0ffmann/ww3-gpu](https://github.com/h0ffmann/ww3-gpu) (was `ww-lab`) | `publisher` | flake input `github:h0ffmann/picasso?dir=labs/publisher` | [`flake.nix`](https://github.com/h0ffmann/ww3-gpu/blob/main/flake.nix) | `52c5772` |
+| | `publisher` | Action `uses: h0ffmann/picasso/labs/publisher@main` | [`.github/workflows/pubs.yml`](https://github.com/h0ffmann/ww3-gpu/blob/main/.github/workflows/pubs.yml) | `main` |
+| | `gleam-website` | flake input `github:h0ffmann/picasso?dir=labs/gleam-website` | `flake.nix` | `52c5772` |
+| | `pratico` | git submodule `picasso/`, sparse (`just submodule-init`) | [`.gitmodules`](https://github.com/h0ffmann/ww3-gpu/blob/main/.gitmodules), [`justfile`](https://github.com/h0ffmann/ww3-gpu/blob/main/justfile) | `4bd3b22` |
+| [h0ffmann/h0ffmann](https://github.com/h0ffmann/h0ffmann) (the profile; CV PDF) | `publisher` | flake input `github:h0ffmann/nix-config?dir=labs/publisher` | [`flake.nix`](https://github.com/h0ffmann/h0ffmann/blob/main/flake.nix) | `0d55b07` |
+| | `publisher` | Action `uses: h0ffmann/nix-config/labs/publisher@main` | [`.github/workflows/cv.yml`](https://github.com/h0ffmann/h0ffmann/blob/main/.github/workflows/cv.yml) | `main` |
+| | `gleam-website` | flake input `github:h0ffmann/picasso?dir=labs/gleam-website` | `flake.nix` | `52c5772` |
+| [h0ffmann/closed-source](https://github.com/h0ffmann/closed-source) (Paper Fabric) | `paper` | flake input `github:h0ffmann/picasso?dir=labs/paper` | [`flake.nix`](https://github.com/h0ffmann/closed-source/blob/main/flake.nix) | `2d6f8d8` |
+| | `gleam-website` | flake input `github:h0ffmann/picasso?dir=labs/gleam-website` | `flake.nix` | `68723ab` |
+| | `viz` | git submodule `forks/picasso` (`just viz` runs `forks/picasso/labs/viz`); ⚠ sparse not checked | [`.gitmodules`](https://github.com/h0ffmann/closed-source/blob/main/.gitmodules), [`justfile`](https://github.com/h0ffmann/closed-source/blob/main/justfile) | `3d60c00` |
+| [h0ffmann/nashkell](https://github.com/h0ffmann/nashkell) | `gleam-website`, `paper` | flake inputs `github:h0ffmann/picasso?dir=labs/gleam-website` and `...?dir=labs/paper` | [`site/flake.nix`](https://github.com/h0ffmann/nashkell/blob/main/site/flake.nix) | `52c5772` (both) |
+| [marola-dev/marola](https://github.com/marola-dev/marola) | `lint` | flake input `github:h0ffmann/nix-config?dir=labs/lint`, `nixpkgs.follows` | [`flake.nix`](https://github.com/marola-dev/marola/blob/main/flake.nix) | `6421951` |
+| | `agentic` | flake input `github:h0ffmann/nix-config/labs/agentic?dir=labs/agentic` (a branch ref) | `flake.nix` | `d42ff99` |
+| [marola-dev/marola-research](https://github.com/marola-dev/marola-research) | `paper`, `gleam-website` | flake inputs `github:h0ffmann/picasso?dir=labs/paper` and `...?dir=labs/gleam-website` | [`flake.nix`](https://github.com/marola-dev/marola-research/blob/main/flake.nix) | `52c5772` (both) |
+| [h0ffmann/gcp-agentic-architect](https://github.com/h0ffmann/gcp-agentic-architect) | `publisher`, `lint`, `agentic` | flake inputs `github:h0ffmann/nix-config?dir=labs/<lab>` | [`flake.nix`](https://github.com/h0ffmann/gcp-agentic-architect/blob/main/flake.nix) | `461413a` (all three) |
+| | `publisher` | Action `uses: h0ffmann/nix-config/labs/publisher@main` | [`.github/workflows/pubs.yml`](https://github.com/h0ffmann/gcp-agentic-architect/blob/main/.github/workflows/pubs.yml) | `main` |
+| [h0ffmann/ptbr-writter](https://github.com/h0ffmann/ptbr-writter) | `gleam-website` | flake input `github:h0ffmann/picasso?dir=labs/gleam-website` | [`flake.nix`](https://github.com/h0ffmann/ptbr-writter/blob/main/flake.nix) | `4bd3b22` |
+| | `gleam-website` (the site's sources) | git submodule `forks/picasso`; `just pins` fails when it differs from the lock; ⚠ sparse not checked | [`.gitmodules`](https://github.com/h0ffmann/ptbr-writter/blob/main/.gitmodules) | `4bd3b22` |
+| | `ptbr-pdf` | `nix run "github:h0ffmann/picasso/$PICASSO_REV?dir=labs/ptbr-pdf"` for the plugin's `.pdf` output; ⚠ only on the unmerged branch `feat/ask-levels` | `plugins/ptbr-writter/scripts/to-pdf.sh` | `dcacdde` |
+
+Labs with no consumer found: `present` (the workstation only). `pratico`, `cuda` and `agentic` are
+also used on this workstation. marola does not take `cuda` as an input today. Private repositories
+that I could not read are not listed. The same list, repository by repository, comes from
+`gh search code 'h0ffmann/picasso' --owner <owner>`.
+
 ## VM
 
 The workstation's NixOS system (`nixosConfigurations.nixos`, nixos-26.05 + Home Manager) in a QEMU
@@ -125,7 +159,7 @@ AppArmor profile in step 4 is not exercised by CI.
 
 ## prático
 
-The WAVEWATCH III toolchain that [ww-lab](https://github.com/h0ffmann/ww-lab) builds in, plus a local
+The WAVEWATCH III toolchain (used by [ww3-gpu](#who-uses-picasso)), plus a local
 zsh pilot and a sandbox for coding agents. See [`labs/pratico`](labs/pratico).
 
 ```console
@@ -163,8 +197,7 @@ just jco              # Claude Code inside ai-jail (jcf / jcs for other models, 
 
 Markdown → LaTeX → PDF, reproducibly, and `mkPdf` / `mkDocx` helpers so other repositories build
 their documents in the Nix sandbox with this toolchain. docx is optional and takes the pandoc
-writer, no TeX. First consumer: ww-lab's course book and its UFRJ/DEL project proposal.
-See [`labs/publisher`](labs/publisher).
+writer, no TeX. See [`labs/publisher`](labs/publisher).
 
 ```console
 cd labs/publisher
@@ -231,8 +264,7 @@ just versions         # what is pinned, built in the sandbox (CI)
 
 Markdown papers to PDF and to arXiv source: pandoc with pandoc-crossref and citeproc, XeLaTeX for
 the PDF and pdfLaTeX for the arXiv check, with python, just, git and gh. pandoc-crossref is built
-against the same pandoc, so the two always agree. First consumer:
-[closed-source](https://github.com/h0ffmann/closed-source) (Paper Fabric). See
+against the same pandoc, so the two always agree. See
 [`labs/paper`](labs/paper).
 
 ```console
@@ -259,8 +291,7 @@ just smoke            # a sample paper through XeLaTeX and pdfLaTeX, built in th
 ## gleam-website
 
 Static sites in Gleam: the toolchain of picasso's own site (Gleam on the JavaScript target for
-Lustre, node, esbuild, just, python), as a lab other repositories borrow. First consumer:
-[closed-source](https://github.com/h0ffmann/closed-source) (the Paper Fabric site). See
+Lustre, node, esbuild, just, python), as a lab other repositories borrow. See
 [`labs/gleam-website`](labs/gleam-website).
 
 ```console
@@ -371,8 +402,7 @@ just pdf deck.pdf / just md deck.md  # pdfpc with notes and timer / presenterm i
 
 The code graph of a repository with **graphify** and nothing else: code-only, keyless and offline,
 the way marola-devkit's `just graph` runs it. `viz build` writes `graph.json` and `graph.html`, an
-interactive picture of the code, under `~/.cache/marola-graph/<repo>`. First consumer:
-[closed-source](https://github.com/h0ffmann/closed-source) (`just viz`). See [`labs/viz`](labs/viz).
+interactive picture of the code, under `~/.cache/marola-graph/<repo>`. See [`labs/viz`](labs/viz).
 
 ```console
 cd labs/viz
@@ -595,27 +625,18 @@ $ nix flake show github:h0ffmann/picasso        # legacy root
 <details>
 <summary>Using a lab from another repository</summary>
 
-Three ways, all used by ww-lab:
+Three ways; [Who uses picasso](#who-uses-picasso) lists the repositories that use each:
 
 ```console
 # 1. as a flake input (publisher exports lib.<system>.mkPdf; see labs/publisher/README.md)
 inputs.publisher.url = "github:h0ffmann/picasso?dir=labs/publisher";
 
 # 2. as a sparse git submodule, only the lab checked out (`nix run ./labs/pratico#ww-lab-submodule`)
-nix develop ./nix-config/labs/pratico#ww3
+nix develop ./picasso/labs/pratico#ww3
 
 # 3. in GitHub Actions (build, upload and commit PDFs in one step)
 - uses: h0ffmann/picasso/labs/publisher@main
 ```
-
-**Used by:** [ww-lab](https://github.com/h0ffmann/ww-lab) — its
-[`flake.nix`](https://github.com/h0ffmann/ww-lab/blob/main/flake.nix) consumes `labs/publisher`
-through `mkPdf`, [`.github/workflows/pubs.yml`](https://github.com/h0ffmann/ww-lab/blob/main/.github/workflows/pubs.yml)
-is a complete caller of the action (tests and translation as `pre-build`, PDFs committed back to
-`main`), and `labs/pratico` is its sparse submodule.
-[marola](https://github.com/h0ffmann/marola) consumes `labs/lint` as a flake input with
-`nixpkgs.follows`, appending `lint.lib.${system}.tools`, `agentic.lib.${system}.tools` and, on x86_64-linux,
-`cuda.lib.${system}.tools` to its own dev shell.
 
 </details>
 
