@@ -16,6 +16,7 @@ const RELS: &[&str] = &[
     "inherits",
     "implements",
     "references",
+    "depends_on",
 ];
 
 fn esc(s: &str) -> String {
@@ -170,12 +171,22 @@ pub fn render(g: &Graph, title: &str) -> String {
     }
     o += "</g><g id=\"lab\">";
     // labels for the best-connected nodes, skipping any that would overlap one already placed
+    // always labelled: the nodes of a linked repository and the files that point at them
+    let mut always: Vec<bool> = g.nodes.iter().map(|x| !x.repo.is_empty()).collect();
+    for e in &g.edges {
+        if !g.nodes[e.t].repo.is_empty() {
+            always[e.s] = true;
+        }
+    }
     let mut order: Vec<usize> = (0..n)
         .filter(|&i| !g.nodes[i].external || !g.nodes[i].repo.is_empty())
         .collect();
-    order.sort_by_key(|&i| (g.nodes[i].repo.is_empty(), std::cmp::Reverse(deg[i]), i));
+    order.sort_by_key(|&i| (!always[i], std::cmp::Reverse(deg[i]), i));
     let mut boxes: Vec<(f64, f64, f64, f64)> = Vec::new();
-    for i in order.into_iter().take(400) {
+    for i in order
+        .into_iter()
+        .take(400 + always.iter().filter(|&&a| a).count())
+    {
         let (x, y) = (pos[i].0 + 8.0, pos[i].1 + 4.0);
         let b = (
             x,
@@ -183,10 +194,11 @@ pub fn render(g: &Graph, title: &str) -> String {
             x + 7.6 * g.nodes[i].label.chars().count() as f64,
             y + 3.0,
         );
-        if boxes.len() >= 70
-            || boxes
-                .iter()
-                .any(|q| b.0 < q.2 && q.0 < b.2 && b.1 < q.3 && q.1 < b.3)
+        if !always[i]
+            && (boxes.len() >= 70
+                || boxes
+                    .iter()
+                    .any(|q| b.0 < q.2 && q.0 < b.2 && b.1 < q.3 && q.1 < b.3))
         {
             continue;
         }
@@ -232,12 +244,12 @@ pub fn render(g: &Graph, title: &str) -> String {
         );
     }
     o += "</ul><h2>Relations</h2><ul class=\"rels\">";
-    for r in RELS {
+    for r in RELS.iter().filter(|r| g.edges.iter().any(|e| e.rel == **r)) {
         let _ = write!(o, "<li><i class=\"l {r}\"></i>{r}</li>");
     }
     o += "</ul></aside>\n</main>\n";
     let data = json!({
-        "n": g.nodes.iter().map(|x| json!([x.label, x.file, if x.line > 0 { format!("L{}", x.line) } else { String::new() }, x.community, x.cname, x.href, x.id])).collect::<Vec<_>>(),
+        "n": g.nodes.iter().map(|x| json!([x.label, x.file, if x.line > 0 { format!("L{}", x.line) } else { String::new() }, x.community, x.cname, x.href, x.id, x.orig])).collect::<Vec<_>>(),
         "e": g.edges.iter().map(|e| json!([e.s, e.t, e.rel])).collect::<Vec<_>>(),
         "v": [0, 0, w, h],
     });
@@ -266,8 +278,8 @@ i.s0,.c0{fill:var(--c0);background:var(--c0)}i.s1,.c1{fill:var(--c1);background:
 i.s4,.c4{fill:var(--c4);background:var(--c4)}i.s5,.c5{fill:var(--c5);background:var(--c5)}i.s6,.c6{fill:var(--c6);background:var(--c6)}i.s7,.c7{fill:var(--c7);background:var(--c7)}
 i.s8,.c8{fill:var(--c8);background:var(--c8)}i.s9,.c9{fill:var(--c9);background:var(--c9)}i.s10,.c10{fill:var(--c10);background:var(--c10)}i.s11,.c11{fill:var(--c11);background:var(--c11)}
 i{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}svg circle{background:none;stroke:var(--bg);stroke-width:1}svg circle.x{opacity:.55}svg circle.r{fill:var(--bg);stroke-width:2.5;stroke-dasharray:3 2}i.r{background:none;border:2px dashed var(--mut)}
-.e{stroke-width:1;stroke:var(--mut);opacity:.35}.e.contains,.e.method,.e.defines{opacity:.18}.e.calls{stroke:var(--c1);opacity:.6}.e.imports_from,.e.imports{stroke:var(--c0);opacity:.5}.e.inherits,.e.implements{stroke:var(--c3);opacity:.7}.e.references{stroke:var(--c2);opacity:.4}
-i.l{width:16px;height:3px;border-radius:0;background:var(--mut)}i.l.calls{background:var(--c1)}i.l.imports_from,i.l.imports{background:var(--c0)}i.l.inherits,i.l.implements{background:var(--c3)}i.l.references{background:var(--c2)}
+.e{stroke-width:1;stroke:var(--mut);opacity:.35}.e.contains,.e.method,.e.defines{opacity:.18}.e.calls{stroke:var(--c1);opacity:.6}.e.imports_from,.e.imports{stroke:var(--c0);opacity:.5}.e.inherits,.e.implements{stroke:var(--c3);opacity:.7}.e.references{stroke:var(--c2);opacity:.4}.e.depends_on{stroke:var(--c4);opacity:.9;stroke-width:1.5;stroke-dasharray:4 3}
+i.l{width:16px;height:3px;border-radius:0;background:var(--mut)}i.l.calls{background:var(--c1)}i.l.imports_from,i.l.imports{background:var(--c0)}i.l.inherits,i.l.implements{background:var(--c3)}i.l.references{background:var(--c2)}i.l.depends_on{background:var(--c4)}
 text{font-size:13px;fill:var(--fg);paint-order:stroke;stroke:var(--bg);stroke-width:3px;pointer-events:none}
 svg.f circle{opacity:.1}svg.f .e{opacity:.03}svg.f circle.on{opacity:1}svg.f .e.on{opacity:.9;stroke-width:1.6}svg.f #lab{display:none}svg circle.pick{stroke:var(--fg);stroke-width:2}
 @media (max-width:760px){main{flex-direction:column}aside{width:auto;max-height:40vh;border-left:0;border-top:1px solid var(--line)}}

@@ -49,6 +49,7 @@
     var n = D.n[i];
     row(n[0], "t");
     row(n[1] + (n[2] ? " " + n[2] : ""));
+    if (n[7]) row("label: " + n[7]);
     row("community: " + n[4]);
     if (n[5]) {
       var a = document.createElement("a");
