@@ -86,6 +86,8 @@ Each lab README has the recipes, what the lab pins (`What it pins`) and how to r
 to download); Rust + Typst, static, needs 25.2 MiB (8.1 MiB with `xz -9`). The method and the
 platforms are in [`labs/ptbr-pdf`](labs/ptbr-pdf#benchmark-from-pandoc-to-rust).
 
+⚠ The xz figure is a measurement only; see the [xz warning](labs/ptbr-pdf/README.md#benchmark-from-pandoc-to-rust) (CVE-2024-3094 and later fixes up to 5.8.4) before you ship an `.xz` file.
+
 ## tools/
 
 One Cargo workspace. Run a crate with `nix run ./tools#<crate>`.

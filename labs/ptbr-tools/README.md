@@ -69,6 +69,15 @@ Measured on x86_64-linux, 2026-10-21, `nix build`, stripped, `opt-level = "z"`, 
 | `packages.static-aarch64` (musl, static) | 528 696 bytes | 517.4 KiB |
 | `packages.default` (glibc) | 480 176 bytes | 47.4 MiB (glibc and libgcc_s from the store) |
 
+> **⚠ xz.** The xz sizes are a measurement only: nothing here ships an `.xz` file. If a release
+> asset is ever compressed with xz, use xz 5.8.4 or newer from the lab's pinned nixpkgs (the lock
+> has 5.8.4), never the host's. XZ Utils had a backdoor in 5.6.0 and 5.6.1
+> ([CVE-2024-3094](https://nvd.nist.gov/vuln/detail/CVE-2024-3094)) and memory-safety fixes in 5.8.1
+> ([CVE-2025-31115](https://github.com/tukaani-project/xz/security/advisories/GHSA-6cc8-p5mm-29w2)),
+> 5.8.3 ([CVE-2026-34743](https://github.com/tukaani-project/xz/security/advisories/GHSA-x872-m794-cxhv))
+> and 5.8.4 ([GHSA-5qpq-xqfv-j9pg](https://github.com/tukaani-project/xz/security/advisories/GHSA-5qpq-xqfv-j9pg)).
+> Prefer zstd or gzip for assets.
+
 The three separate binaries each carry their own copy of `std`. One binary that dispatches on its
 name is 2.5 times smaller in total, so the lab ships that one. `checks.size` fails if the static
 binary grows more than 10% over 570 112 bytes (a ceiling of 627 123 bytes).
