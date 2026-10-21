@@ -236,7 +236,7 @@ If the licence changes, change `LICENSE`, `LICENSES/`, `REUSE.toml`, `.zenodo.js
 `meta.license` in the labs and the site footer in the same PR.
 
 `.zenodo.json` is the one hand-edited citation file; `CITATION.cff` is generated from it by
-`just citation` (`scripts/citation.py`, copied from marola-dev/marola), and CI's `citation` job
+`just citation` (`tools/citation`, a Rust port of the script copied from marola-dev/marola), and CI's `citation` job
 fails when they drift. `DESCRIPTION.md` (LinkedIn and the GitHub About box), `TAGS.md` (GitHub
 topics), `ZENODO_TAGS.md` (Zenodo keywords) and `PHILOSOPHY.md` (the reasons behind this file)
 describe the repo; when what the repo is changes, a lab is added or dropped, update them in the

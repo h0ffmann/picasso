@@ -145,7 +145,7 @@ sharingan-bench *args:
 
 # regenerate CITATION.cff from .zenodo.json (`just citation --check` to only verify)
 citation *args:
-    python3 scripts/citation.py {{ args }}
+    nix run ./tools#citation -- {{ args }}
 
 
 # Threads posts from docs/social (docs/adr/0001): `just social check`, `just social post <dir> --sha <sha> --dry-run`
