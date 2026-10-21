@@ -1,5 +1,5 @@
 {
-  description = "ptbr-pdf — Markdown to PDF for pt-BR text: a Rust binary with Typst as a library, tailored for ptbr-writter";
+  description = "ptbr-pdf — Markdown to PDF for pt-BR text: a Rust binary with Typst as a library, tailored for ptbr-writer";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable"; # locked to the same rev as labs/publisher

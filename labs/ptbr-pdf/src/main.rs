@@ -4,7 +4,7 @@ use std::{fmt::Write as _, path::PathBuf, process::ExitCode};
 use typst_as_lib::TypstEngine;
 use typst_layout::PagedDocument;
 
-/// Only the body and code faces ptbr-writter needs; ⚠ (U+26A0) comes from DejaVu Sans Mono.
+/// Only the body and code faces ptbr-writer needs; ⚠ (U+26A0) comes from DejaVu Sans Mono.
 const FONTS: [&[u8]; 6] = [
     include_bytes!("../fonts/LibertinusSerif-Regular.otf"),
     include_bytes!("../fonts/LibertinusSerif-Bold.otf"),
@@ -181,7 +181,7 @@ pub fn to_typst(md: &str) -> String {
                 Tag::Strong => Kind::Wrap("strong"),
                 Tag::Strikethrough => Kind::Wrap("strike"),
                 Tag::Link { dest_url, .. } => Kind::Link(dest_url.to_string()),
-                // shortcut: images and other tags keep only their text, upgrade when ptbr-writter emits images
+                // shortcut: images and other tags keep only their text, upgrade when ptbr-writer emits images
                 _ => Kind::Wrap("box"),
             })),
             Event::End(TagEnd::TableHead) => {
