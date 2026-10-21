@@ -1,0 +1,4 @@
+{
+  "summary": "The ptbr-writer plugin's runtime scripts as three small static Rust binaries, std only",
+  "headline": ["rustc", "cargo"]
+}
