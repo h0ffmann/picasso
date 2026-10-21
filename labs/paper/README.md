@@ -45,3 +45,14 @@ re-exports the filter for `nix run`.
 pandoc 3.1.8 and later write citations as `\citeproc{...}` and the reference list with
 `\bibitem`. A custom LaTeX template must define these, as pandoc's own `common.latex` does
 (`pandoc --print-default-data-file templates/common.latex`, the `csl-refs` block).
+
+## What it pins
+
+| Type        | Program |
+| :---------- | :-----: |
+| Converter   | [pandoc 3.7](https://pandoc.org/) (citeproc) + [pandoc-crossref 0.3.21](https://github.com/lierdakil/pandoc-crossref) (section, table and figure numbers) |
+| TeX         | [TeX Live 2025](https://tug.org/texlive/) `texliveMedium` + fontspec, unicode-math, Latin Modern, csquotes, fancyhdr, titling, xurl, … |
+| Engines     | `xelatex` (the PDF) and `pdflatex` (the arXiv source check) |
+| Scripting   | python 3, [just](https://github.com/casey/just), git, [gh](https://cli.github.com/) (releases) |
+| PDF tools   | [poppler-utils](https://poppler.freedesktop.org/) (`pdfinfo`, `pdftotext`), [librsvg](https://gitlab.gnome.org/GNOME/librsvg) (`rsvg-convert`, SVG images in PDFs) |
+| Reuse       | `lib.<system>.{tools, tex}`, `packages.<system>.{pandoc-crossref, tex}`, `checks.<system>.{smoke, versions}` |

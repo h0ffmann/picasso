@@ -22,13 +22,13 @@ Tick a box only with evidence: a commit, a benchmark row or a review link.
       model or effort
 - [x] Licence matrix in `references/licences.md`, with each row's reason checked against the FSF
       licence list and Creative Commons' compatibility page (2026-10-12)
-- [x] `scripts/licence_scan.py`: stdlib only, reads files only, `--self-test` passes, and the
-      self-test fails if the matrix in the doc and the code differ
+- [x] `sharingan licence-scan` (`tools/sharingan`): reads files only, `cargo test` passes, and the
+      test fails if the matrix in the doc and the code differ
 - [x] Evals: 26 trigger queries and 4 output cases on 5 fixture repos, with code checks on the diff
-- [x] `scripts/bench.py` runs both sets with and without the skill, and `--self-test` makes no
+- [x] `sharingan bench` runs both sets with and without the skill, and its tests make no
       model calls
 - [x] First benchmark recorded in `evals/BENCHMARK.md`
-- [x] CI runs both self-tests (`skills self-tests` job in `.github/workflows/ci.yml`, added with
+- [x] CI runs both tools' tests (`skills self-tests` job in `.github/workflows/ci.yml`, added with
       the human's approval)
 - [ ] Benchmark at 3 runs per output case: with the skill ≥ 0.90 pass rate, and ahead of no skill
       in every case (round 3, at 2 runs: 0.94 against 0.46, ahead or level in every case)

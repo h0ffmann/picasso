@@ -73,10 +73,22 @@
       # The sample paper through both engines, in the sandbox: crossref and citeproc must resolve
       # every reference (--fail-if-warnings), and the PDFs must carry the resolved text.
       smokeFor = pkgs: pkgs.runCommand "paper-smoke" { nativeBuildInputs = toolsFor pkgs; } ''
-        export HOME=$TMPDIR TEXMFVAR=$TMPDIR/texmf-var OUT_DIR=$TMPDIR/out
+        export HOME=$TMPDIR TEXMFVAR=$TMPDIR/texmf-var
         cp -r ${./example} example && chmod -R u+w example
-        bash example/build.sh
-        mkdir -p "$out" && cp "$OUT_DIR"/*.pdf "$out"/
+        here=$PWD/example build=$TMPDIR/out
+        mkdir -p "$build"
+        # one paper with cross-references and a citation, through XeLaTeX (the PDF) and pdfLaTeX
+        # (what arXiv runs); warnings fail the build, so an unresolved reference fails it
+        common=(-F pandoc-crossref --citeproc --bibliography "$here/refs.bib" --number-sections --fail-if-warnings)
+        for engine in xelatex pdflatex; do
+          pandoc "$here/paper.md" "''${common[@]}" --pdf-engine="$engine" -o "$build/paper-$engine.pdf"
+          text="$(pdftotext "$build/paper-$engine.pdf" -)"
+          for want in "Section 2" "Table 1" "Raymond" "10.5210/fm.v3i2.578"; do
+            grep -qF "$want" <<<"$text" || { echo "paper-$engine.pdf: missing '$want'" >&2; exit 1; }
+          done
+        done
+        echo "paper smoke: $build/paper-xelatex.pdf $build/paper-pdflatex.pdf"
+        mkdir -p "$out" && cp "$build"/*.pdf "$out"/
       '';
 
       # lab.json, the card the profile README renders: its shape is asserted at evaluation, and the

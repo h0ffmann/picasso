@@ -102,7 +102,7 @@ legal organization, a new ADR can add it.
    ---
    ```
 
-   CI (`social posts` in `ci.yml`) runs `scripts/social.py check` and fails when a post has no
+   CI (`social posts` in `ci.yml`) runs `nix run ./tools#social -- check` and fails when a post has no
    valid status, a POSTED post has no Instagram URL, or the caption is longer than Threads allows.
 3. **Instagram to Threads.** `threads.yml` runs on a push to `main` that changes a post README.
    It posts every post whose status became `POSTED` in that push: the caption block named by
@@ -112,9 +112,9 @@ legal organization, a new ADR can add it.
    public. `workflow_dispatch` with `post` (a directory, or `latest`) posts one again by hand.
 4. **Releases to Threads.** After it makes the GitHub release, `release.yml` dispatches
    `threads.yml` with `release=<tag>` (a release made with `GITHUB_TOKEN` starts no other
-   workflow). `scripts/social.py release <tag>` posts a short pt-BR text with the release notes
+   workflow). `nix run ./tools#social -- release <tag>` posts a short pt-BR text with the release notes
    link (as the link preview), the concept DOI and the site.
-5. **Code**: `scripts/social.py`, standard library only, like `scripts/citation.py`, with
+5. **Code**: `tools/social`, a Rust crate (it was `scripts/social.py`, standard library only, until picasso became Nix and Rust only), with
    `--self-test` (fake HTTP), `--dry-run` for `post` and `release`, and `check`. The root
    `justfile` gets `social` and `threads-refresh`, in just 1.21 syntax (no recipe attributes).
 6. **Secrets**: `THREADS_USER_ID` and `THREADS_ACCESS_TOKEN`, repository secrets, never in a file.
@@ -144,4 +144,4 @@ legal organization, a new ADR can add it.
 - The token must be renewed every 60 days with `just threads-refresh`, or a new login is needed.
 - Slides must be committed and the repo public: Threads fetches them from
   `raw.githubusercontent.com`.
-- The release text is fixed in `scripts/social.py`; change it there.
+- The release text is fixed in `tools/social/src/post.rs`; change it there.

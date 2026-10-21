@@ -1,0 +1,3 @@
+[workspace]
+resolver = "3"
+members = ["citation", "render", "sharingan", "site-check", "site-releases", "social", "zenodo"]

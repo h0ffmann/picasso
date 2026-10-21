@@ -1,0 +1,9 @@
+[package]
+name = "site-check"
+version = "0.1.0"
+edition = "2024"
+description = "CI guard for the site's hard rules (AGENTS.md), run on the built page"
+license = "MIT"
+
+[dependencies]
+regex = "1"

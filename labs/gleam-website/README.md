@@ -37,3 +37,13 @@ Without a flake: `nix develop 'github:h0ffmann/picasso?dir=labs/gleam-website'`.
 The layout that picasso's `site/` uses, and that a consumer can copy: `src/<app>.gleam` starts a
 Lustre application, `src/<app>/prerender.gleam` prints the first render as `dist/index.html`,
 `entry.mjs` is esbuild's entry point, and `static/` (with `style.css`) is copied into `dist/`.
+
+## What it pins
+
+| Type       | Program |
+| :--------- | :-----: |
+| Language   | [Gleam 1.19](https://gleam.run/) on the JavaScript target; sites use [Lustre](https://lustre.build) from Hex |
+| Runtime    | [Node.js 24](https://nodejs.org/) (`gleam test`, `gleam run` for the prerender) |
+| Bundler    | [esbuild](https://esbuild.github.io/) |
+| Scripting  | [just](https://github.com/casey/just), python 3 |
+| Reuse      | `lib.<system>.tools`, `packages.<system>.{gleam, esbuild}`, `checks.<system>.{smoke, versions}` |

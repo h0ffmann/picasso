@@ -1,0 +1,12 @@
+[package]
+name = "sharingan"
+version = "0.1.0"
+edition = "2024"
+license = "AGPL-3.0-only"
+description = "ouroboric-sharingan's licence scanner and benchmark runner"
+
+[dependencies]
+regex = "1"
+serde = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
+toml = { version = "0.8", default-features = false, features = ["parse"] }

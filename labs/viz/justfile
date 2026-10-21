@@ -15,9 +15,9 @@ shell:
 graph *args:
     nix run "{{here}}#viz" -- "$@"
 
-# Run viz's --self-test from source (what CI runs before the flake check).
+# Run viz's tests (`cargo test` in tools/; CI builds them as the viz flake check).
 self-test:
-    "{{here}}/scripts/viz" --self-test
+    nix develop "{{here}}" --command cargo test --manifest-path "{{here}}/tools/Cargo.toml"
 
 # Graph example/ in the Nix sandbox and query it (what CI builds).
 smoke:

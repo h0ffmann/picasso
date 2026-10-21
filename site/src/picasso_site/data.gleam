@@ -1,5 +1,5 @@
 //// What the page reads: `history.json` (written by `history.nix`), the releases and DOIs (written
-//// into the bundle by `releases.py` at build time) and the GitHub API.
+//// into the bundle by `site-releases` at build time) and the GitHub API.
 
 import gleam/dict
 import gleam/dynamic/decode

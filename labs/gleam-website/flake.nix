@@ -38,10 +38,20 @@
       # A site with Hex dependencies needs the registry, so it builds in the dev shell, not the
       # sandbox. The smoke project has none: it proves gleam → JavaScript → node → esbuild here.
       smokeFor = pkgs: pkgs.runCommand "gleam-website-smoke" { nativeBuildInputs = toolsFor pkgs; } ''
-        export HOME=$TMPDIR OUT_DIR=$TMPDIR/out
+        export HOME=$TMPDIR
         cp -r ${./example} example && chmod -R u+w example
-        bash example/build.sh
-        mkdir -p "$out" && cp "$OUT_DIR"/* "$out"/
+        build=$TMPDIR/out
+        mkdir -p "$build"
+        cd example
+        # compile with gleam, run the result on node, bundle it with esbuild, and check that both print the page
+        gleam build --no-print-progress
+        gleam run --no-print-progress > "$build/index.html"
+        esbuild entry.mjs --bundle --minify --format=esm --outfile="$build/app.js" --log-level=warning
+        node "$build/app.js" | cmp - "$build/index.html"
+        grep -qF '<h1>gleam-website smoke</h1>' "$build/index.html" || { echo "smoke: page missing" >&2; exit 1; }
+        echo "gleam-website smoke: $build/index.html $build/app.js"
+        cd ..
+        mkdir -p "$out" && cp "$build"/* "$out"/
       '';
 
       # lab.json, the card the profile README renders: its shape is asserted at evaluation, and the

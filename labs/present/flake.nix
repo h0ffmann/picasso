@@ -1,5 +1,5 @@
 {
-  description = "present — screen annotation, capture and recording, webcam controls (v4l2 + the `cam` profile script), and terminal/PDF presenters, for talks and demos on a Linux desktop";
+  description = "present — screen annotation, capture and recording, webcam controls (v4l2 + the `cam` profile tool), and terminal/PDF presenters, for talks and demos on a Linux desktop";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -11,14 +11,31 @@
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       forAll = f: lib.genAttrs systems (s: f nixpkgs.legacyPackages.${s});
 
-      # `cam` resolves v4l2-ctl from the caller's PATH on purpose: its --self-test fakes it, and
-      # writeShellApplication prepends runtimeInputs, which would shadow the fake.
-      camFor = pkgs: pkgs.writeShellApplication {
-        name = "cam";
-        runtimeInputs = [ pkgs.coreutils pkgs.gawk pkgs.gnused pkgs.gnugrep ];
-        text = builtins.readFile ./scripts/cam;
-        meta.license = pkgs.lib.licenses.agpl3Only;
+      src = lib.fileset.toSource {
+        root = ./tools;
+        fileset = lib.fileset.unions [ ./tools/Cargo.toml ./tools/Cargo.lock ./tools/src ];
       };
+
+      # `cam` (tools/) calls v4l2-ctl from the caller's PATH, not a wrapped-in copy: the lab's shell
+      # provides v4l-utils. The tests fake v4l2-ctl behind a trait and run in the build (checkPhase).
+      camFor = pkgs: pkgs.rustPlatform.buildRustPackage {
+        pname = "cam";
+        version = "0.1.0";
+        inherit src;
+        cargoLock.lockFile = ./tools/Cargo.lock;
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postInstall = "wrapProgram $out/bin/cam --prefix PATH : ${lib.makeBinPath [ pkgs.coreutils ]}";
+        meta = { mainProgram = "cam"; license = lib.licenses.agpl3Only; };
+      };
+
+      # Same sources, `cargo clippy -D warnings`.
+      clippyFor = pkgs: (camFor pkgs).overrideAttrs (old: {
+        pname = "cam-clippy";
+        nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.clippy ];
+        buildPhase = "cargo clippy --release --all-targets --offline -- -D warnings";
+        doCheck = false;
+        installPhase = "touch $out";
+      });
 
       # Everything that runs without a display server, on every system.
       cliFor = pkgs: with pkgs; [
@@ -50,10 +67,6 @@
       ];
 
       toolsFor = pkgs: cliFor pkgs ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux (desktopFor pkgs);
-
-      selfTest = pkgs: drv: pkgs.runCommand "${drv.name}-self-test" { } ''
-        ${drv}/bin/${drv.name} --self-test | tee "$out"
-      '';
 
       # Only tools that answer --version without a display: a GUI app launched in the sandbox
       # would hang on a missing socket, not fail cleanly.
@@ -113,16 +126,17 @@
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {
           name = "present";
-          packages = toolsFor pkgs;
+          packages = toolsFor pkgs ++ [ pkgs.cargo pkgs.rustc pkgs.clippy ];
           shellHook = ''echo "present: $(command -v gromit-mpx >/dev/null && echo 'gromit-mpx, flameshot, wf-recorder, obs, cam' || echo 'terminal tools only on this OS') | presenterm $(presenterm --version | cut -d' ' -f2)"'';
         };
       });
 
-      # Built by `nix flake check`: the script's self-test against a fake v4l2-ctl, and the CLI
+      # Built by `nix flake check`: `cam`'s tests against a fake v4l2-ctl, and the CLI
       # tools' versions — no camera, no display, no GUI launched in the sandbox.
       checks = forAll (pkgs: {
         lab-json = labCardFor pkgs;
-        cam = selfTest pkgs (camFor pkgs);
+        cam = camFor pkgs; # building it runs its `cargo test`
+        clippy = clippyFor pkgs;
         versions = self.packages.${pkgs.stdenv.hostPlatform.system}.versions;
       });
     };

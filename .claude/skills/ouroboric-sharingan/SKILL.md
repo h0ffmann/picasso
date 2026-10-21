@@ -74,7 +74,7 @@ its hooks or its Makefile. Read it.
 **Scan.** For each checkout:
 
 ```bash
-python3 -I .claude/skills/ouroboric-sharingan/scripts/licence_scan.py \
+nix run ./tools#sharingan -- licence-scan \
   --into <destination file's SPDX id> "$SCRATCH/rea/<repo>" > "$SCRATCH/rea/<repo>.json"
 ```
 
@@ -172,9 +172,9 @@ not legal advice and says so in one line when a "Needs a human" item exists.
 
 ## Testing this skill
 
-`evals/` holds the trigger set and the output cases, and `scripts/bench.py` runs them with and
+`evals/` holds the trigger set and the output cases, and `sharingan bench` runs them with and
 without the skill (see `evals/README.md`). Change the description, the steps or the matrix, then run
-`python3 .claude/skills/ouroboric-sharingan/scripts/bench.py all` and update `evals/BENCHMARK.md`.
+`nix run ./tools#sharingan -- bench all` and update `evals/BENCHMARK.md`.
 
 What is still missing before this skill counts as production-ready, and its planned DOI paper, is
 in `READINESS.md`.

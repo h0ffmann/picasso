@@ -1,0 +1,10 @@
+[package]
+name = "zenodo"
+version = "0.1.0"
+edition = "2024"
+description = "Deposits the determinism whitepaper on Zenodo as a draft; never publishes"
+license = "AGPL-3.0-only"
+
+[dependencies]
+serde_json = "1"
+ureq = "2"

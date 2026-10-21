@@ -35,7 +35,8 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - run: python3 scripts/social.py check
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - run: nix run ./tools#social -- check
       - name: post to Threads
         env:
           THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
@@ -46,17 +47,17 @@ jobs:
           RELEASE: ${{ inputs.release }}
         run: |
           if [ -n "$RELEASE" ]; then
-            python3 scripts/social.py release "$RELEASE" | tee -a "$GITHUB_STEP_SUMMARY"
+            nix run ./tools#social -- release "$RELEASE" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           if [ "$EVENT" = push ]; then
-            mapfile -t posts < <(python3 scripts/social.py changed "$BEFORE" "$GITHUB_SHA")
+            mapfile -t posts < <(nix run ./tools#social -- changed "$BEFORE" "$GITHUB_SHA")
           elif [ "$POST" = latest ]; then
-            mapfile -t posts < <(python3 scripts/social.py latest)
+            mapfile -t posts < <(nix run ./tools#social -- latest)
           else
             posts=("$POST")
           fi
           for p in "${posts[@]}"; do
             [ -n "$p" ] || continue
-            python3 scripts/social.py post "$p" --sha "$GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+            nix run ./tools#social -- post "$p" --sha "$GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
           done

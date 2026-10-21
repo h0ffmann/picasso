@@ -13,8 +13,8 @@ just graph build            # graph the directory you are in; prints the path of
 just graph update           # the same graph, with the Markdown pages, headings and links
 just graph query "<q>"      # answer from the graph, capped at --budget 400
 just graph path <a> <b>     # also explain <x>, or any other graphify command, on the same graph
-just self-test              # viz --self-test, from source (CI)
-just smoke                  # example/ graphed and queried in the Nix sandbox (CI)
+just self-test              # viz's cargo tests (CI builds them as the viz check)
+just smoke                  # example/ (two Rust files, one calling the other) graphed and queried in the sandbox (CI)
 ```
 
 | Command | Does |
@@ -49,3 +49,11 @@ restart loses the nixpkgs wrapper ("No module named graphify").
 Without a flake: `nix run 'github:h0ffmann/picasso?dir=labs/viz' -- build`. From a checkout
 that has picasso as a submodule: `nix run path:<submodule>/labs/viz -- build`. First consumer:
 [h0ffmann/closed-source](https://github.com/h0ffmann/closed-source) (`just viz`).
+
+## What it pins
+
+| Type       | Program |
+| :--------- | :-----: |
+| Code graph | [graphify 0.9](https://github.com/Graphify-Labs/graphify) (tree-sitter extraction, clustering, `graph.html`), with `PYTHONHASHSEED` pinned |
+| Script     | `viz` (build / query / where / any graphify command), with a `--self-test` against a fake graphify |
+| Reuse      | `lib.<system>.tools`, `packages.<system>.{viz, graphify, smoke}`, `checks.<system>.{viz, smoke}` |

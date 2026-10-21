@@ -1,0 +1,5 @@
+---
+source: src/main.rs
+expression: "to_typst(&format!(\"```{lang}\\n{src}\\n```\"))"
+---
+#raw(block: true, lang: "sql", "SELECT 1;")

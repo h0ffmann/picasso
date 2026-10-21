@@ -15,7 +15,7 @@ on a slide shows its source under it. Slides 2 and 4 take their numbers from
 |---|---|---|
 | [slide-1.png](slide-1.png) | the logo, "a toolchain is a dependency, so pin it like one", the DOI | [10.5281/zenodo.23311208](https://doi.org/10.5281/zenodo.23311208) |
 | [slide-2.png](slide-2.png) | Python and JavaScript, two cans of worms; the owl | Pimentel et al., MSR 2019 ([doi:10.1109/MSR.2019.00077](https://doi.org/10.1109/MSR.2019.00077)); Ohm et al., DIMVA 2020 ([doi:10.1007/978-3-030-52683-2_2](https://doi.org/10.1007/978-3-030-52683-2_2)); Fabio Akita, [New AI-Focused Language Just Released: Bend 2](https://www.akitaonrails.com/en/2026/09/19/new-ai-language-just-released-bend-2/), 19 September 2026 |
-| [slide-3.png](slide-3.png) | CVEs in npm and PyPI over time, cumulative, drawn like a GitHub star-history chart | [GitHub Advisory Database](https://github.com/advisories), reviewed advisories with a CVE id, counted from the [OSV](https://osv.dev) dumps by [cves.py](cves.py) into [cves.json](cves.json) on 2026-10-12 |
+| [slide-3.png](slide-3.png) | CVEs in npm and PyPI over time, cumulative, drawn like a GitHub star-history chart | [GitHub Advisory Database](https://github.com/advisories), reviewed advisories with a CVE id, counted from the [OSV](https://osv.dev) dumps by `social cves` ([tools/social](../../../tools/social)) into [cves.json](cves.json) on 2026-10-12 |
 | [slide-4.png](slide-4.png) | if the generator is stochastic, the rest must be deterministic; the guitar | He / Thinking Machines Lab, [Defeating Nondeterminism in LLM Inference](https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference), 2025; Malka, Zacchiroli, Zimmermann, [arXiv:2501.15919](https://arxiv.org/abs/2501.15919) |
 | [slide-5.png](slide-5.png) | the whitepaper, the DOI, the site and the source; the dove | the whitepaper ([WHITEPAPER.md](../../../WHITEPAPER.md)) |
 
@@ -54,11 +54,11 @@ Link in the bio: https://h0ffmann.github.io/picasso
 ## Render again
 
 ```console
-cd docs/social/instagram_001
-node render.mjs            # Playwright on the module path; CHROMIUM=<path> to pick a binary
+nix run ./tools#social -- render   # from the repo root; headless Chromium on PATH, CHROMIUM=<path> to pick a binary
 
 # refresh the CVE counts (downloads about 250 MB)
-curl -O https://osv-vulnerabilities.storage.googleapis.com/npm/all.zip && mv all.zip npm.zip
-curl -O https://osv-vulnerabilities.storage.googleapis.com/PyPI/all.zip && mv all.zip PyPI.zip
-python3 cves.py . > cves.json
+mkdir -p /tmp/osv
+curl -o /tmp/osv/npm.zip https://osv-vulnerabilities.storage.googleapis.com/npm/all.zip
+curl -o /tmp/osv/PyPI.zip https://osv-vulnerabilities.storage.googleapis.com/PyPI/all.zip
+nix run ./tools#social -- cves /tmp/osv > docs/social/instagram_001/cves.json
 ```

@@ -1,0 +1,10 @@
+[package]
+name = "citation"
+version = "0.1.0"
+edition = "2024"
+description = "Validates .zenodo.json and generates CITATION.cff and the README citation block from it"
+license = "AGPL-3.0-only"
+
+[dependencies]
+regex = "1"
+serde_json = { version = "1", features = ["preserve_order"] }

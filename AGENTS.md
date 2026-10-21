@@ -25,7 +25,7 @@ this repo's root system configuration is legacy (see below) and the living part 
 |---|---|---|
 | `labs/pratico` | WAVEWATCH III toolchain (gfortran / OpenMPI / NetCDF), zsh-ai pilot, ai-jail recipes | [ww-lab](https://github.com/h0ffmann/ww-lab) (sparse submodule) |
 | `labs/publisher` | pandoc + TeX Live, `mkPdf`, a composite Action that builds and commits PDFs; shields-badge filter + TikZ pills, color emoji, Japanese via luatexja (lualatex) | ww-lab (flake input + Action), [h0ffmann/h0ffmann](https://github.com/h0ffmann/h0ffmann) (CV PDF) |
-| `labs/ptbr-pdf` | pandoc + a minimal XeLaTeX (`texliveBasic` + the template's packages): one `to-pdf` command, 729 MiB against publisher's 3.2 GiB | [ptbr-writter](https://github.com/h0ffmann/ptbr-writter) (the plugin's `.pdf` output) |
+| `labs/ptbr-pdf` | `to-pdf`, one Rust binary with Typst as a library and six embedded fonts: Markdown to PDF for pt-BR text; static musl build 25.2 MiB (8.1 MiB with xz) against 729 MiB for the pandoc + XeLaTeX it replaced | [ptbr-writer](https://github.com/h0ffmann/ptbr-writer) (the plugin's `.pdf` output) |
 | `labs/lint` | hadolint, actionlint, shellcheck, ruff, pyflakes, cloc, coverage, pdoc — a list, no scripts | [marola](https://github.com/h0ffmann/marola) (flake input) |
 | `labs/agentic` | ai-jail, OpenCode, Open Code Review (`ocr`), gh, and `jail-run` / `gh-token` / `clip` / `clip-relay` | marola (landing via #50) |
 | `labs/cuda` | nixos-cuda binary cache setup, torch venv with the driver libs on its path; x86_64-linux only | marola, this workstation (landing via #50) |
@@ -36,22 +36,31 @@ this repo's root system configuration is legacy (see below) and the living part 
 **Hard rule: the site always shows the Marola and Ouroboric logos**, in the band under the
 header and linked to their projects, loaded from their own repositories (`marola-dev/marola`,
 `ouroboric-dev/ouroboric`) at a pinned commit and never copied into this repo, since they are
-trademarks and not under this repo's licence. `site/check.py` enforces it, and Gabriel Volpe's
+trademarks and not under this repo's licence. `tools/site-check` enforces it, and Gabriel Volpe's
 credit, in CI (`site rules`), on the built page. Bump the pinned commit in
 `site/src/picasso_site/family.gleam` when a project changes its logo.
 
 `site/` is a Gleam application (JavaScript target, [Lustre](https://lustre.build)) with its own
 `flake.nix`: `nix develop` there gives gleam, node, esbuild and just, and `just ci` (format, tests,
-build, `check.py`) is what CI and the Pages deploy run. It renders the repo's history from
+build, `site-check`) is what CI and the Pages deploy run. It renders the repo's history from
 `site/static/history.json`, the labs' cards, and the ouroboric-dev standings fetched live; `just
 build` prerenders the page into `site/dist/index.html` and the client takes it over in place.
 Hex packages are pinned by checksum in `site/manifest.toml`. After merges, refresh the history
-from a full clone with `python3 site/history.py` and commit the JSON. `site/static/drawings/` holds
+from a full clone with `just history` (in `site/`) and commit the JSON. `site/static/drawings/` holds
 original one-line drawings made for this repo in homage to Picasso; the README shows one of them.
 Never add a reproduction of a Picasso work (under copyright until the end of 2043), the Picasso signature,
 or anything that suggests the estate endorses this repo. Anything third-party that lands here gets
 its row in the README's License table, with its licence and the credit it requires; Gabriel Volpe
 stays credited, with a link to [gvolpe/nix-config](https://github.com/gvolpe/nix-config).
+
+## Only Nix and Rust (hard rule)
+
+**Hard rule: only Nix and Rust.** Code in this repository is Nix or Rust. The exceptions are the
+Gleam sites (`site/` and `labs/gleam-website`, with their JavaScript FFI), test fixtures that stand
+for third-party code (`.claude/skills/ouroboric-sharingan/evals/files/`), and
+`labs/pratico/smoke/kokkos/*.cpp`, the C++/Kokkos toolchain's smoke test, which can only be C++ (the owner's decision, 2026-10-21). Until it is ported, `scripts/release.sh` (a guardrail: it makes a DOI) stays shell; it calls
+`nix run ./tools#citation -- --check` for the citation check.
+The repo-wide tools are the Rust crates in `tools/` (one workspace, `nix run ./tools#<crate>`).
 
 ## The lab contract (hard rule)
 
@@ -81,12 +90,14 @@ ai-jail, so the file is readable from `flake.lock` alone without evaluating the 
 `checks.lab-json` (pure Nix, copied in every lab) asserts the shape and that every attribute
 resolves in the lab's pinned nixpkgs.
 
-Scripts (`labs/<lab>/scripts/*`) are one file each, `#!/usr/bin/env bash`, `set -euo pipefail`,
-run **from source** by CI and wrapped with `writeShellApplication` for consumers. Each has a
-`--self-test` mode that fakes its external commands on `PATH`; CI runs every self-test it finds
-and `nix flake check` runs them again in the sandbox. Trap: `runtimeInputs` must never list a
-tool the self-test fakes, since the wrapper prepends `runtimeInputs` and would shadow the fake
-(`labs/agentic/flake.nix` says which tools each script resolves from the caller's `PATH` instead).
+A lab's tools are Rust: a Cargo crate in `labs/<lab>/tools/` (one binary per command, std first),
+built by the lab's own flake with `rustPlatform.buildRustPackage` from the lab's pinned nixpkgs
+and `cargoLock.lockFile`, and wrapped (`makeWrapper`) with the programs it calls, so consumers keep
+the same command names. A lab stays self-contained: two labs that need the same small tool each
+keep their own copy. Tests are `cargo test`, run in the package build; `nix flake check` also runs
+`clippy -D warnings` and `cargo fmt --check`. No shell or Python script: the only code outside Nix
+and Rust is listed in the hard rule above. Repo-wide tools are the crates in `tools/`
+(`nix run ./tools#<crate>`).
 
 ## Setup & commands
 
@@ -97,7 +108,7 @@ just shell            # (lint, publisher, agentic, cuda) the tools on PATH, in y
 just ww3 / just dev   # (pratico) toolchain-only / interactive shell
 just versions         # (lint, publisher) what is pinned
 just smoke            # (pratico, publisher) the check CI builds
-just self-test        # (agentic, cuda) every script's --self-test, from source
+just test             # (agentic, ptbr-pdf; cuda, present, viz: self-test; pratico: tools-test) cargo test in the dev shell
 ```
 
 Definition of done for any change under `labs/<lab>` is the CI gate in
@@ -108,7 +119,6 @@ nix flake check --no-update-lock-file --print-build-logs .
 nix run nixpkgs#nixpkgs-fmt -- --check .     # ci resolves the lab's own locked nixpkgs; same tools
 nix run nixpkgs#statix -- check .
 nix run nixpkgs#deadnix -- --fail .
-nix run nixpkgs#shellcheck -- scripts/*      # when the lab has scripts
 just --list                                  # justfile parses (and with just 1.21, see below)
 nix run nixpkgs#actionlint                   # after any .github/** change
 ```
@@ -211,12 +221,12 @@ point: a session must not make its own rules weaker.
 | `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json` | the rules and the permissions of every agent |
 | `LICENSE`, `LICENSES/`, `REUSE.toml`, `.zenodo.json` | the licence, the copyright holders and the citation |
 | `.github/workflows/`, `.github/CODEOWNERS` | the CI gate and who reviews |
-| `site/check.py`, `site/src/picasso_site/family.gleam` | the logos and the credit hard rule |
+| `tools/site-check/`, `site/src/picasso_site/family.gleam` | the logos and the credit hard rule |
 | `scripts/release.sh` | releases make a permanent DOI |
 | `hardware-configuration.nix` | generated on the machine, never by an agent |
 
 Never make a check pass by removing it, skipping it or making it weaker. A CI job, a self-test, a
-`check.py` rule or a `reuse lint` error that fails tells you what to fix.
+`site-check` rule or a `reuse lint` error that fails tells you what to fix.
 
 ## Project metadata
 
@@ -236,7 +246,7 @@ If the licence changes, change `LICENSE`, `LICENSES/`, `REUSE.toml`, `.zenodo.js
 `meta.license` in the labs and the site footer in the same PR.
 
 `.zenodo.json` is the one hand-edited citation file; `CITATION.cff` is generated from it by
-`just citation` (`scripts/citation.py`, copied from marola-dev/marola), and CI's `citation` job
+`just citation` (`tools/citation`, a Rust port of the script copied from marola-dev/marola), and CI's `citation` job
 fails when they drift. `DESCRIPTION.md` (LinkedIn and the GitHub About box), `TAGS.md` (GitHub
 topics), `ZENODO_TAGS.md` (Zenodo keywords) and `PHILOSOPHY.md` (the reasons behind this file)
 describe the repo; when what the repo is changes, a lab is added or dropped, update them in the
@@ -263,11 +273,11 @@ rules. A breaking change to a lab's exported shape is a major bump (a minor bump
 - An agent never makes or pushes a release tag. Each release makes a permanent Zenodo DOI, so
   only the human runs `just release`.
 - `release.yml` makes the GitHub release and starts `pages.yml` on `main`. The site's changelog
-  comes from the tags (`site/releases.py`) at build time. Do not commit a changelog file.
+  comes from the tags (`tools/site-releases`) at build time. Do not commit a changelog file.
 - `PICASSOPAPER.pdf` is the original, coloured paper: the output of
-  `docs/whitepapers/determinism-2026/render.mjs` from `whitepaper.html`. `WHITEPAPER.md` is the same
+  `just render paper` (`tools/render`) from `docs/whitepapers/determinism-2026/whitepaper.html`. `WHITEPAPER.md` is the same
   paper in ASD-STE100 (two `/ste100` passes, logged in that directory's `STE100.md`), and
-  `render-ste.mjs` prints it to `WHITEPAPER.pdf`. If you change a fact in `whitepaper.html`, change
+  `just render ste` prints it to `WHITEPAPER.pdf`. If you change a fact in `whitepaper.html`, change
   it in `WHITEPAPER.md` in the same PR, and render the two PDFs again.
 - Every PDF in the repository has a row in the README's **Papers** table: the PDF, its source and one
   line on what it is. A PR that adds, moves or removes a PDF changes that table too.
@@ -299,6 +309,8 @@ An issue never has the two labels.
   for. Send a request for work to the owner of that project, and say this in the answer.
 
 ## Commits and PRs
+
+**Hard rule: English.** Commit messages, PR titles and bodies, issues and review comments in this repository are in English, even when the request or a consumer repository is in Portuguese.
 
 Commit subject in the `<type>(<lab>): ...` shape the log already uses — `feat(cuda): ...`,
 `docs: ...`, `ci: ...` — with a body that carries the reasoning, then exactly these trailers:

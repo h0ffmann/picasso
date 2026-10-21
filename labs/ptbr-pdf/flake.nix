@@ -1,5 +1,5 @@
 {
-  description = "ptbr-pdf — Markdown to PDF for pt-BR text: pandoc and a minimal XeLaTeX, tailored for ptbr-writter";
+  description = "ptbr-pdf — Markdown to PDF for pt-BR text: a Rust binary with Typst as a library, tailored for ptbr-writer";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable"; # locked to the same rev as labs/publisher
@@ -11,48 +11,36 @@
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       forAll = f: lib.genAttrs systems (s: f nixpkgs.legacyPackages.${s});
 
-      # scheme-basic plus the packages pandoc's LaTeX template loads under xelatex for Portuguese
-      # text with tables, code and links (example/ builds with them). No TeX Live medium, no
-      # lualatex fonts, no CJK, no python: that is publisher's job. 729 MiB closure against
-      # publisher's 3.2 GiB (nix path-info -Sh, x86_64-linux, 2026-10-20).
-      texFor = pkgs: pkgs.texliveBasic.withPackages (ps: with ps; [
-        xetex
-        fontspec
-        unicode-math
-        lm-math
-        babel-portuges
-        hyphen-portuguese
-        dejavu
-        geometry
-        booktabs
-        etoolbox
-        upquote
-        xcolor
-        bookmark
-        fancyvrb
-        parskip
-        tools
-        selnolig
-        xurl
-        footnotehyper
-        iftex
-        lualatex-math
-      ]);
-
-      # to-pdf FILE.md [OUT.pdf]: the one command. DejaVu by file name, so no fontconfig is needed.
-      toPdfFor = pkgs: pkgs.writeShellApplication {
-        name = "to-pdf";
-        runtimeInputs = [ pkgs.pandoc (texFor pkgs) pkgs.coreutils ];
-        text = ''
-          in=''${1:?usage: to-pdf texto.md [saida.pdf]}
-          out=''${2:-''${in%.*}.pdf}
-          export HOME=''${HOME:-$(mktemp -d)} TEXMFVAR=''${TEXMFVAR:-$(mktemp -d)}
-          pandoc "$in" --pdf-engine=xelatex -V lang=pt-BR -V geometry:margin=2.5cm \
-            -V mainfont=DejaVuSans -V mainfontoptions=Extension=.ttf \
-            -V monofont=DejaVuSansMono -V monofontoptions=Extension=.ttf -o "$out"
-          echo "$out"
-        '';
+      src = lib.fileset.toSource {
+        root = ./.;
+        fileset = lib.fileset.unions [ ./Cargo.toml ./Cargo.lock ./src ./example ./fonts ];
       };
+
+      # to-pdf FILE.md [OUT.pdf]: pulldown-cmark -> Typst markup -> typst crate -> PDF. Fonts are
+      # compiled in (typst-assets), so the binary needs no fontconfig, no TeX and no network.
+      # Tests run in the build (checkPhase), the end-to-end one compiles example/smoke.md.
+      toPdfFor = pkgs: pkgs.rustPlatform.buildRustPackage {
+        pname = "to-pdf";
+        version = "0.1.0";
+        inherit src;
+        cargoLock.lockFile = ./Cargo.lock;
+        # a changed snapshot fails the build; it never rewrites one
+        env = { INSTA_UPDATE = "no"; CI = "true"; };
+        stripAllList = [ "bin" ]; # the symbol table too, not only debug info
+        meta.mainProgram = "to-pdf";
+      };
+
+      # bytes: the measured size of packages.to-pdf plus 10% (README, Size).
+      sizeCeiling = 29200000;
+
+      # Same sources, `cargo clippy -D warnings` as the build.
+      clippyFor = pkgs: (toPdfFor pkgs).overrideAttrs (old: {
+        pname = "to-pdf-clippy";
+        nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.clippy ];
+        buildPhase = "cargo clippy --release --all-targets --offline -- -D warnings";
+        doCheck = false;
+        installPhase = "touch $out";
+      });
 
       # lab.json, the card the profile README renders (copied in every lab: a lab references
       # nothing outside itself).
@@ -71,14 +59,16 @@
       packages = forAll (pkgs: {
         default = toPdfFor pkgs;
         to-pdf = toPdfFor pkgs;
-        tex = texFor pkgs;
         smoke = pkgs.runCommand "ptbr-pdf-smoke" { nativeBuildInputs = [ (toPdfFor pkgs) pkgs.poppler-utils ]; } ''
-          export HOME=$TMPDIR OUT_DIR=$TMPDIR/out
-          bash ${./example}/build.sh
-          pdftotext "$OUT_DIR/smoke.pdf" - | grep -q 'ação, coração, pão' || { echo "smoke: accents lost" >&2; exit 1; }
-          pdftotext "$OUT_DIR/smoke.pdf" - | grep -q '⚠' || { echo "smoke: ⚠ lost" >&2; exit 1; }
-          mkdir -p "$out" && cp "$OUT_DIR/smoke.pdf" "$out"/
+          export HOME=$TMPDIR
+          mkdir -p "$out"
+          to-pdf ${./example/smoke.md} "$out/smoke.pdf"
+          pdftotext "$out/smoke.pdf" - | grep -q 'ação, coração, pão' || { echo "smoke: accents lost" >&2; exit 1; }
+          pdftotext "$out/smoke.pdf" - | grep -q '⚠' || { echo "smoke: ⚠ lost" >&2; exit 1; }
         '';
+      } // lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
+        # a static musl binary, for release assets
+        static = toPdfFor pkgs.pkgsStatic;
       });
 
       apps = forAll (pkgs: {
@@ -88,13 +78,25 @@
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {
           name = "ptbr-pdf";
-          packages = [ (toPdfFor pkgs) pkgs.pandoc (texFor pkgs) ];
+          packages = [ pkgs.rustc pkgs.cargo pkgs.clippy pkgs.rustfmt pkgs.rust-analyzer pkgs.cargo-insta ] ++ lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.gcc;
         };
       });
 
       checks = forAll (pkgs: {
         lab-json = labCardFor pkgs;
-        smoke = self.packages.${pkgs.system}.smoke;
+        to-pdf = toPdfFor pkgs; # builds and runs cargo test
+        clippy = clippyFor pkgs;
+        fmt = pkgs.runCommand "to-pdf-fmt" { nativeBuildInputs = [ pkgs.cargo pkgs.rustfmt ]; } ''
+          cargo fmt --check --manifest-path ${src}/Cargo.toml && touch $out
+        '';
+        # the static binary must stay light: fails if it grows past the ceiling (measured size + 10%)
+        size = pkgs.runCommand "to-pdf-size" { } ''
+          size=$(stat -L -c %s ${self.packages.${pkgs.stdenv.hostPlatform.system}.to-pdf}/bin/to-pdf)
+          echo "to-pdf: $size bytes, ceiling ${toString sizeCeiling}"
+          [ "$size" -le ${toString sizeCeiling} ] || { echo "to-pdf grew past its ceiling" >&2; exit 1; }
+          touch $out
+        '';
+        smoke = self.packages.${pkgs.stdenv.hostPlatform.system}.smoke;
       });
     };
 }

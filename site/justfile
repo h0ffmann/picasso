@@ -14,7 +14,7 @@ build: releases
 
 # Write the release tags and the Zenodo DOIs into src/picasso_site_releases.mjs
 releases:
-    python3 releases.py
+    nix run ../tools#site-releases --
 
 # Unit tests, on node
 test: releases
@@ -24,13 +24,12 @@ test: releases
 ci:
     gleam format --check src test
     just test
-    python3 releases.py --self-test
     just build
-    python3 check.py
+    nix run ../tools#site-check --
 
 # Build and serve on http://localhost:8000
 serve: build
-    python3 -m http.server -d dist 8000
+    miniserve --index index.html -p 8000 dist
 
 # Rewrite static/history.json from a full clone (history.nix; Nix cannot run git, so it reads the log)
 history:

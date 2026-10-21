@@ -10,10 +10,10 @@ bundled by esbuild. The toolchain comes from this directory's `flake.nix`; the H
 pinned by checksum in `manifest.toml`. No token, no server.
 
 ```console
-nix develop          # gleam, node, esbuild, just, python3
+nix develop          # gleam, node, esbuild, just, miniserve
 just build           # dist/: app.js, the prerendered index.html, static/ copied in
 just test            # unit tests, on node
-just ci              # format check, tests, build, check.py: what CI and the deploy run
+just ci              # format check, tests, build, site-check: what CI and the deploy run
 just serve           # build, then http://localhost:8000
 just history         # rewrite static/history.json (from a full clone)
 ```
@@ -26,10 +26,10 @@ just history         # rewrite static/history.json (from a full clone)
 | `src/picasso_site/prerender.gleam` | writes `dist/index.html`, so the page reads without JavaScript |
 | `src/picasso_site_ffi.mjs` | `fetch` with the localStorage cache, `URL`, `Intl` |
 | `static/` | `style.css`, `drawings/`, `icons/` (the favicon), `plan/hosting-plan.pdf`, `history.json`: copied to `dist/` as is |
-| `check.py` | the hard rules, checked on the built page |
-| `releases.py` | the changelog from the tags and the Zenodo DOIs, written into `src/picasso_site_releases.mjs` (generated) before each build |
+| `tools/site-check` | the hard rules, checked on the built page |
+| `tools/site-releases` | the changelog from the tags and the Zenodo DOIs, written into `src/picasso_site_releases.mjs` (generated) before each build |
 
-The version, the changelog and the DOIs are fixed at build time: `releases.py` reads the tags,
+The version, the changelog and the DOIs are fixed at build time: `site-releases` reads the tags,
 takes the concept DOI from `CITATION.cff` and asks Zenodo for each release's own DOI, and the
 result is compiled into the bundle and the prerendered page. If Zenodo cannot be reached, the build
 keeps the concept DOI. The standings come from the public GitHub API at view time, cached ten

@@ -31,3 +31,13 @@ between the two. `nix flake update lint` in the consumer picks up a new revision
 fails the flake check if a nixpkgs bump breaks any of them.
 
 First consumer: [marola](https://github.com/h0ffmann/marola) (`flake.nix` and `ci.yml` there).
+
+## What it pins
+
+| Type       | Program |
+| :--------- | :-----: |
+| Dockerfile | [hadolint](https://github.com/hadolint/hadolint) |
+| Workflows  | [actionlint](https://github.com/rhysd/actionlint) + [shellcheck](https://www.shellcheck.net/) for the `run:` blocks |
+| Python     | [ruff](https://docs.astral.sh/ruff/), [pyflakes](https://github.com/PyCQA/pyflakes), [coverage.py](https://coverage.readthedocs.io/), [pdoc](https://pdoc.dev/) |
+| Counting   | [cloc](https://github.com/AlDanial/cloc) |
+| Reuse      | `lib.<system>.tools` (the list), `packages.<system>.<tool>`, `checks.<system>.versions` |

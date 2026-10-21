@@ -9,10 +9,9 @@ default:
 shell:
     nix develop "{{here}}"
 
-# Run both scripts' --self-test from source (what CI runs before the flake check).
+# Run both tools' tests (`cargo test` in tools/, the dev shell's cargo; CI builds them as flake checks).
 self-test:
-    "{{here}}/scripts/setup-cuda-cache" --self-test
-    "{{here}}/scripts/setup-ml-venv" --self-test
+    nix develop "{{here}}" --command cargo test --manifest-path "{{here}}/tools/Cargo.toml"
 
 # Show the nix.custom.conf block the cache setup would write; `sudo just cache-setup apply` writes it.
 cache-setup mode="--dry-run":

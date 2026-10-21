@@ -15,5 +15,8 @@ nixos.md
 result
 result-*
 
+# cargo build output of the Rust tools
+tools/**/target/
+
 # `just vm` disk image
 nixos.qcow2

@@ -1,0 +1,5 @@
+---
+source: src/main.rs
+expression: "to_typst(\"Reinicie o serviço ⚠ agora.\")"
+---
+Reinicie o serviço ⚠ agora\.

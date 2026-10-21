@@ -1,0 +1,10 @@
+[package]
+name = "pratico-tools"
+version = "0.1.0"
+edition = "2021"
+description = "gh-token, clip, clip-relay, ww-lab-submodule and ww3-submodule: host-side tools of the pratico lab"
+license = "Apache-2.0"
+publish = false
+
+[profile.release]
+strip = true

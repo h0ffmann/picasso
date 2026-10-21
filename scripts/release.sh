@@ -98,7 +98,7 @@ fi
   || { echo "release: the working tree is dirty; commit or stash first" >&2; exit 1; }
 [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] \
   || { echo "release: main is not level with origin/main; pull or push first" >&2; exit 1; }
-python3 scripts/citation.py --check
+nix run ./tools#citation -- --check
 
 echo "release: $tag at $(git log -1 --format='%h %s') (previous: ${prev:-none})" >&2
 if [ "$dry_run" -eq 1 ]; then

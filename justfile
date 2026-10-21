@@ -135,22 +135,22 @@ skills:
 
 # ouroboric-sharingan's licence and tooling scan of local checkouts: `just sharingan-scan --into AGPL-3.0-only <dir>...`
 sharingan-scan *args:
-    python3 -I .claude/skills/ouroboric-sharingan/scripts/licence_scan.py {{ args }}
+    nix run ./tools#sharingan -- licence-scan {{ args }}
 
 
-# benchmark ouroboric-sharingan with the claude CLI: `just sharingan-bench all`, `--self-test` makes no model calls
+# benchmark ouroboric-sharingan with the claude CLI: `just sharingan-bench all`, `cargo test --manifest-path tools/sharingan/Cargo.toml` makes no model calls
 sharingan-bench *args:
-    python3 .claude/skills/ouroboric-sharingan/scripts/bench.py {{ args }}
+    nix run ./tools#sharingan -- bench {{ args }}
 
 
 # regenerate CITATION.cff from .zenodo.json (`just citation --check` to only verify)
 citation *args:
-    python3 scripts/citation.py {{ args }}
+    nix run ./tools#citation -- {{ args }}
 
 
 # Threads posts from docs/social (docs/adr/0001): `just social check`, `just social post <dir> --sha <sha> --dry-run`
 social *args:
-    python3 scripts/social.py "$@"
+    nix run ./tools#social -- "$@"
 
 
 # renew the 60-day Threads token straight into the repo secret; the token is never printed
@@ -158,7 +158,7 @@ threads-refresh:
     #!/usr/bin/env bash
     set -euo pipefail
     : "${THREADS_ACCESS_TOKEN:?set THREADS_ACCESS_TOKEN to the current token (e.g. in .env)}"
-    python3 scripts/social.py refresh | gh secret set THREADS_ACCESS_TOKEN --repo h0ffmann/picasso
+    nix run ./tools#social -- refresh | gh secret set THREADS_ACCESS_TOKEN --repo h0ffmann/picasso
 
 
 # tag main and publish: `just release` lists what is unreleased, then `just release minor|patch|major|X.Y.Z [--dry-run]`
@@ -194,3 +194,17 @@ mixcq:
     @repomix --config code-quality.config.json
     @cat nixos.md | xclip -selection clipboard
     @echo "CODE QUALITY: Contents of nixos.md copied to clipboard"
+
+
+# the three PDFs: `just render study|paper|ste` (Chromium and pandoc from Nix, tools/render in Rust; Google Fonts need network)
+render which:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    P=github:NixOS/nixpkgs/6510408d147d8c5e6d76043e899e9251756f6a75
+    case "{{which}}" in
+      study) a=(page docs/studies/determinate-2026/study.html docs/studies/determinate-2026/study.pdf --footer "h0ffmann/picasso · picasso and Determinate Nix · 12 October 2026") ;;
+      paper) a=(page docs/whitepapers/determinism-2026/whitepaper.html PICASSOPAPER.pdf --doi docs/whitepapers/determinism-2026/doi.txt --footer "h0ffmann/picasso · same inputs, same factory · 12 October 2026") ;;
+      ste) a=(ste .) ;;
+      *) echo "usage: just render study|paper|ste" >&2; exit 1 ;;
+    esac
+    nix shell $P#chromium $P#pandoc -c env CHROMIUM=chromium nix run ./tools#render -- "${a[@]}"

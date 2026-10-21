@@ -1,0 +1,2 @@
+usage: zenodo [--sandbox] draft | upload | --self-test
+run from docs/whitepapers/determinism-2026; draft needs ZENODO_TOKEN

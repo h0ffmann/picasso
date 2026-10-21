@@ -106,15 +106,16 @@ jobs:
       - run: pipx run reuse==5.0.2 lint
 
   # docs/social: every Instagram post has a valid status (DESIGN, REVIEW or POSTED), and
-  # scripts/social.py, which posts to Threads, passes its self-test (docs/adr/0001).
+  # tools/social, which posts to Threads, passes its self-test (docs/adr/0001).
   social:
     name: social posts
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - run: python3 scripts/social.py --self-test
-      - run: python3 scripts/social.py check
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - run: nix run ./tools#social -- --self-test
+      - run: nix run ./tools#social -- check
 
   # .claude/skills/ouroboric-sharingan: the licence scanner and the benchmark runner's self-tests
   # (no model calls; the benchmark itself runs by hand, evals/BENCHMARK.md).
@@ -124,8 +125,32 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - run: python3 -I .claude/skills/ouroboric-sharingan/scripts/licence_scan.py --self-test
-      - run: python3 .claude/skills/ouroboric-sharingan/scripts/bench.py --self-test
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - name: cargo test, in the Nix sandbox
+        run: nix build --no-link --no-update-lock-file --print-build-logs ./tools#checks.x86_64-linux.tests
+
+  # tools/: the Rust crates CI, the justfiles and the site call. Not a lab (the sharingan, social
+  # and zenodo tests read files elsewhere in the repo), so it has its own job: `checks` build the
+  # workspace with its tests, clippy -D warnings and cargo fmt --check.
+  tools:
+    name: tools (Rust)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - name: nix flake check (lock must be current)
+        run: nix flake check --no-update-lock-file --print-build-logs .
+      - name: resolve the pinned nixpkgs
+        id: pin
+        run: |
+          rev="$(nix flake metadata --json --no-update-lock-file . | jq -r '.locks.nodes.nixpkgs.locked.rev')"
+          echo "nixpkgs=github:NixOS/nixpkgs/$rev" >> "$GITHUB_OUTPUT"
+      - run: nix run '${{ steps.pin.outputs.nixpkgs }}#nixpkgs-fmt' -- --check .
+      - run: nix run '${{ steps.pin.outputs.nixpkgs }}#statix' -- check .
+      - run: nix run '${{ steps.pin.outputs.nixpkgs }}#deadnix' -- --fail .
 
   actionlint:
     name: workflows lint
@@ -135,7 +160,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v23
       - run: nix run nixpkgs#actionlint
 
-  # The Gleam site: format, unit tests, the build, and check.py's hard rules on the built page.
+  # The Gleam site: format, unit tests, the build, and site-check's hard rules on the built page.
   site:
     name: site rules
     runs-on: ubuntu-latest

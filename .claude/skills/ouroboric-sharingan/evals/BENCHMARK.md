@@ -1,6 +1,6 @@
 # Benchmark
 
-`scripts/bench.py all`, run in a cloud session on 2026-10-12 at the `claude` CLI's default model
+`sharingan bench all`, run in a cloud session on 2026-10-12 at the `claude` CLI's default model
 (no `--model`, no effort pin). Each output case runs in a fresh throwaway workspace (see
 `README.md`); "without_skill" is the same agent with no `ouroboric-sharingan` installed.
 
