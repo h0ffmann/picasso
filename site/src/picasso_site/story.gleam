@@ -113,7 +113,8 @@ pub const papers = [
   ),
 ]
 
-const input_snippet = "inputs.lint.url = \"github:h0ffmann/picasso?dir=labs/lint\";"
+const input_snippet =
+  "inputs.lint.url = \"github:h0ffmann/picasso?dir=labs/lint\";"
 
 const submodule_snippet = "nix develop ./picasso/labs/pratico#ww3"
 

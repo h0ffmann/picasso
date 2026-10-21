@@ -28,9 +28,11 @@ import picasso_site/story
 
 const org = "ouroboric-dev"
 
-const readiness_dir = "https://api.github.com/repos/ouroboric-dev/ouroboric/contents/docs/1-company/readiness"
+const readiness_dir =
+  "https://api.github.com/repos/ouroboric-dev/ouroboric/contents/docs/1-company/readiness"
 
-const readiness_home = "https://github.com/ouroboric-dev/ouroboric/tree/main/docs/1-company/readiness"
+const readiness_home =
+  "https://github.com/ouroboric-dev/ouroboric/tree/main/docs/1-company/readiness"
 
 pub type Remote(a) {
   Loading

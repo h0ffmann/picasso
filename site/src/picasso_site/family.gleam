@@ -6,9 +6,11 @@ import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 
-pub const marola_logo = "https://raw.githubusercontent.com/marola-dev/marola/d0d576ea014335acbc190a09ce9fcbe0f89a391d/docs/assets/logo.svg"
+pub const marola_logo =
+  "https://raw.githubusercontent.com/marola-dev/marola/d0d576ea014335acbc190a09ce9fcbe0f89a391d/docs/assets/logo.svg"
 
-const ouroboric = "https://raw.githubusercontent.com/ouroboric-dev/ouroboric/4ab80ed2486a5e0ab0ade13e5089c2a4acdb4216/docs/7-branding/identity/logo/"
+const ouroboric =
+  "https://raw.githubusercontent.com/ouroboric-dev/ouroboric/4ab80ed2486a5e0ab0ade13e5089c2a4acdb4216/docs/7-branding/identity/logo/"
 
 pub const ouroboric_logo = ouroboric <> "ouroboric-logo-horizontal.svg"
 
