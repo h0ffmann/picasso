@@ -312,7 +312,8 @@ fn families(meta: &Meta) -> Vec<(String, String)> {
 fn render_cff(meta: &Meta, concept_doi: &str) -> Result<String, String> {
     let repo = repo(meta)?;
     let mut out = vec![
-        "# Generated from .zenodo.json by scripts/citation.py; edit that file, then `just citation`.".to_string(),
+        "# Generated from .zenodo.json by tools/citation; edit that file, then `just citation`."
+            .to_string(),
         "cff-version: 1.2.0".into(),
         format!("message: \"If you use {NAME}, please cite it using the metadata below.\""),
         format!("type: {}", s(meta, "upload_type")),
