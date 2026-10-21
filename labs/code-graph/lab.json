@@ -1,0 +1,4 @@
+{
+  "summary": "The code graph of a repository, graphify's graph.json and graph.html, in one Rust binary",
+  "headline": ["rustc", "cargo"]
+}
