@@ -1,12 +1,12 @@
 # Evals for ouroboric-sharingan
 
-Two sets, in skill-creator's formats, run by `../scripts/bench.py` with the `claude` CLI.
+Two sets, in skill-creator's formats, run by `sharingan bench` (`tools/sharingan`) with the `claude` CLI.
 
-- `trigger_evals.json`: queries that should and should not load the skill. `bench.py trigger`
+- `trigger_evals.json`: queries that should and should not load the skill. `sharingan bench trigger`
   installs the skill in a throwaway project, runs `claude -p` on each query (3 runs by default) and
   records whether the first tool call is the skill. A query passes when its trigger rate is on the
   right side of 0.5.
-- `evals.json`: four output cases. `bench.py output` builds a throwaway workspace: the five
+- `evals.json`: four output cases. `sharingan bench output` builds a throwaway workspace: the five
   fixture repos in `files/acme/` (each made a git repo with a fixed commit, so the agent has SHAs to
   cite) next to a generated destination that looks like picasso (AGPL-3.0-only code, CC BY 4.0
   docs, a `REUSE.toml`, an `AGENTS.md` that reserves the licence files and workflows for a human, a
@@ -23,12 +23,12 @@ Two sets, in skill-creator's formats, run by `../scripts/bench.py` with the `cla
 | `acme-lint` | Apache-2.0 with NOTICE; `package.json` says MIT; `vendor/gplfmt/` is GPL-3.0 | manifest mismatch, NOTICE, a vendored dir under another licence |
 
 The licence files in the fixtures are headers only, enough for a reader and for
-`licence_scan.py` to identify them; the fixtures are invented and belong to no real project.
+`sharingan licence-scan` to identify them; the fixtures are invented and belong to no real project.
 
 ```bash
-python3 .claude/skills/ouroboric-sharingan/scripts/bench.py --self-test     # no model calls
-python3 .claude/skills/ouroboric-sharingan/scripts/bench.py all             # trigger x3, output x2
-python3 .claude/skills/ouroboric-sharingan/scripts/bench.py output --ids 3 --runs 3
+cargo test --manifest-path tools/sharingan/Cargo.toml      # no model calls
+nix run ./tools#sharingan -- bench all             # trigger x3, output x2
+nix run ./tools#sharingan -- bench output --ids 3 --runs 3
 ```
 
 A full run makes 78 trigger calls, 16 agent runs and 16 grader calls (about 3 USD at the CLI's default model in October 2026). Record the summary

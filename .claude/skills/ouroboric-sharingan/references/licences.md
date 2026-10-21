@@ -1,8 +1,8 @@
 # Licences: what may come in, and how
 
 Read this when an item's verdict is not obvious, or before you write the report's licence
-column. `scripts/licence_scan.py --into <id>` gives the same verdict from the same table; its
-`--self-test` fails if the table below and the script differ.
+column. `sharingan licence-scan --into <id>` (`tools/sharingan`) gives the same verdict from the same table; its
+`cargo test` fails if the table below and the code differ.
 
 This is a working rule set for an agent, not legal advice. When a case is not in the table, or
 the table and the licence text seem to disagree, the verdict is `cite` and a human decides.
