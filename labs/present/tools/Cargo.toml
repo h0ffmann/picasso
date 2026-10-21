@@ -1,0 +1,10 @@
+[package]
+name = "cam"
+version = "0.1.0"
+edition = "2021"
+description = "cam: webcam controls you can save and get back, over v4l2-ctl"
+license = "AGPL-3.0-only"
+publish = false
+
+[profile.release]
+strip = true
