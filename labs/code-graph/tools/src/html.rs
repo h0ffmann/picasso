@@ -155,13 +155,25 @@ pub fn render(g: &Graph, title: &str) -> String {
     o += "</g><g id=\"nodes\">";
     for (i, nd) in g.nodes.iter().enumerate() {
         let r = 3.0 + (1.0 + deg[i] as f64).ln().min(4.0) * 1.6;
-        let ext = if nd.external { " x" } else { "" };
-        let _ = write!(o, "<circle class=\"c{}{ext}\" cx=\"{}\" cy=\"{}\" r=\"{r:.1}\"><title>{}</title></circle>", nd.community % 12, pos[i].0, pos[i].1, esc(&nd.label));
+        let (ext, style) = if !nd.repo.is_empty() {
+            // a node of a linked repository: a hollow dashed ring in its community's colour
+            (
+                " r",
+                format!(" style=\"stroke:var(--c{})\"", nd.community % 12),
+            )
+        } else if nd.external {
+            (" x", String::new())
+        } else {
+            ("", String::new())
+        };
+        let _ = write!(o, "<circle class=\"c{}{ext}\"{style} cx=\"{}\" cy=\"{}\" r=\"{r:.1}\"><title>{}</title></circle>", nd.community % 12, pos[i].0, pos[i].1, esc(&nd.label));
     }
     o += "</g><g id=\"lab\">";
     // labels for the best-connected nodes, skipping any that would overlap one already placed
-    let mut order: Vec<usize> = (0..n).filter(|&i| !g.nodes[i].external).collect();
-    order.sort_by_key(|&i| (std::cmp::Reverse(deg[i]), i));
+    let mut order: Vec<usize> = (0..n)
+        .filter(|&i| !g.nodes[i].external || !g.nodes[i].repo.is_empty())
+        .collect();
+    order.sort_by_key(|&i| (g.nodes[i].repo.is_empty(), std::cmp::Reverse(deg[i]), i));
     let mut boxes: Vec<(f64, f64, f64, f64)> = Vec::new();
     for i in order.into_iter().take(400) {
         let (x, y) = (pos[i].0 + 8.0, pos[i].1 + 4.0);
@@ -186,26 +198,37 @@ pub fn render(g: &Graph, title: &str) -> String {
         );
     }
     o += "</g><g id=\"hl\"></g></svg>\n<aside><div id=\"info\">Click a node.</div><h2>Communities</h2><ul id=\"legend\">";
-    let mut comms: BTreeMap<usize, (usize, &str)> = BTreeMap::new();
+    let mut comms: BTreeMap<usize, (usize, &str, &str)> = BTreeMap::new();
     for nd in &g.nodes {
-        comms
+        let c = comms
             .entry(nd.community)
-            .or_insert((0, nd.cname.as_str()))
-            .0 += 1;
+            .or_insert((0, nd.cname.as_str(), nd.repo.as_str()));
+        c.0 += 1;
     }
-    for (c, (cnt, name)) in comms.iter().take(60) {
+    // the first 60 communities, and every linked repository's
+    let listed: Vec<_> = comms
+        .iter()
+        .enumerate()
+        .filter(|(k, (_, v))| *k < 60 || !v.2.is_empty())
+        .map(|(_, x)| x)
+        .collect();
+    for (c, (cnt, name, repo)) in &listed {
+        let (name, mark) = if repo.is_empty() {
+            (esc(name), "")
+        } else {
+            (format!("external: {}", esc(repo)), " r")
+        };
         let _ = write!(
             o,
-            "<li data-c=\"{c}\"><i class=\"s{}\"></i>{} <b>{cnt}</b></li>",
-            c % 12,
-            esc(name)
+            "<li data-c=\"{c}\"><i class=\"s{}{mark}\"></i>{name} <b>{cnt}</b></li>",
+            *c % 12
         );
     }
-    if comms.len() > 60 {
+    if comms.len() > listed.len() {
         let _ = write!(
             o,
             "<li class=\"more\">{} smaller communities not listed</li>",
-            comms.len() - 60
+            comms.len() - listed.len()
         );
     }
     o += "</ul><h2>Relations</h2><ul class=\"rels\">";
@@ -214,7 +237,7 @@ pub fn render(g: &Graph, title: &str) -> String {
     }
     o += "</ul></aside>\n</main>\n";
     let data = json!({
-        "n": g.nodes.iter().map(|x| json!([x.label, x.file, if x.line > 0 { format!("L{}", x.line) } else { String::new() }, x.community, x.cname])).collect::<Vec<_>>(),
+        "n": g.nodes.iter().map(|x| json!([x.label, x.file, if x.line > 0 { format!("L{}", x.line) } else { String::new() }, x.community, x.cname, x.href, x.id])).collect::<Vec<_>>(),
         "e": g.edges.iter().map(|e| json!([e.s, e.t, e.rel])).collect::<Vec<_>>(),
         "v": [0, 0, w, h],
     });
@@ -242,7 +265,7 @@ ul{list-style:none;margin:0;padding:0}#legend li{display:flex;gap:8px;align-item
 i.s0,.c0{fill:var(--c0);background:var(--c0)}i.s1,.c1{fill:var(--c1);background:var(--c1)}i.s2,.c2{fill:var(--c2);background:var(--c2)}i.s3,.c3{fill:var(--c3);background:var(--c3)}
 i.s4,.c4{fill:var(--c4);background:var(--c4)}i.s5,.c5{fill:var(--c5);background:var(--c5)}i.s6,.c6{fill:var(--c6);background:var(--c6)}i.s7,.c7{fill:var(--c7);background:var(--c7)}
 i.s8,.c8{fill:var(--c8);background:var(--c8)}i.s9,.c9{fill:var(--c9);background:var(--c9)}i.s10,.c10{fill:var(--c10);background:var(--c10)}i.s11,.c11{fill:var(--c11);background:var(--c11)}
-i{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}svg circle{background:none;stroke:var(--bg);stroke-width:1}svg circle.x{opacity:.55}
+i{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}svg circle{background:none;stroke:var(--bg);stroke-width:1}svg circle.x{opacity:.55}svg circle.r{fill:var(--bg);stroke-width:2.5;stroke-dasharray:3 2}i.r{background:none;border:2px dashed var(--mut)}
 .e{stroke-width:1;stroke:var(--mut);opacity:.35}.e.contains,.e.method,.e.defines{opacity:.18}.e.calls{stroke:var(--c1);opacity:.6}.e.imports_from,.e.imports{stroke:var(--c0);opacity:.5}.e.inherits,.e.implements{stroke:var(--c3);opacity:.7}.e.references{stroke:var(--c2);opacity:.4}
 i.l{width:16px;height:3px;border-radius:0;background:var(--mut)}i.l.calls{background:var(--c1)}i.l.imports_from,i.l.imports{background:var(--c0)}i.l.inherits,i.l.implements{background:var(--c3)}i.l.references{background:var(--c2)}
 text{font-size:13px;fill:var(--fg);paint-order:stroke;stroke:var(--bg);stroke-width:3px;pointer-events:none}

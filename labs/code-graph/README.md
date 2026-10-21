@@ -80,7 +80,7 @@ Dependencies: `tree-sitter`, the eight grammar crates above and `serde_json`. No
 - **graph.html.** One file, offline, no network request. The layout is computed in Rust
   (Fruchterman-Reingold, 120 steps, a fixed start, community by community), and the SVG is complete
   with JavaScript off: nodes by community, edges by relation, labels for the best-connected nodes.
-  A 5 KB viewer script (`assets/viewer.js`, hand-written, no dependency, compiled in with
+  A 6 KB viewer script (`assets/viewer.js`, hand-written, no dependency, compiled in with
   `include_str!`) adds pan, zoom, a search box, a click on a node to see its neighbours, and a click on
   a community in the legend. Colours follow `prefers-color-scheme`.
 - **Deterministic.** The same tree gives byte-identical `graph.json`, `GRAPH_REPORT.md` and
@@ -144,6 +144,46 @@ TypeScript and Fortran parser tables.
 - The 30 other languages of graphify (Go, Java, C, C++, Ruby, PHP, Kotlin, Swift and others).
 - graphify's NFKC step in ids (only a lowercase and non-word rule here).
 - `.gitignore` is not read.
+
+## Linking graphs across repositories
+
+`extract --link NAME=PATH/graph.json[@URL]` (repeatable) draws the boundary between two repositories
+without merging their graphs. NAME is the other repository's short name, PATH its graph.json, URL
+where its graph.html is published (relative or `http(s)`; default `NAME.html`).
+
+The text files of DIR (the files the walk visits, plus `.nix`, `.sh`, `.md`, `.toml`, `.lock`, `.yml`
+and `justfile`) are read for references to the repository. A reference is, on one line:
+
+1. `github:OWNER/NAME...?dir=PATH` (or `&dir=PATH`), a flake URL, up to the next quote;
+2. `github.com/OWNER/NAME/tree/REV/PATH` or `.../blob/REV/PATH`, with REV one path segment;
+3. `lab=PATH`, at the start of a word (the key in a lock file);
+4. a word `labs/X`, in a file whose text contains NAME (any case).
+
+A PATH resolves to one node of the linked graph, below it: `PATH/flake.nix` if there is one, else the
+node with most edges, then the lowest id. A PATH with no node is dropped. Each node found is added as
+an external node `NAME:<id>` (label `NAME: <label>`, `"external": "NAME"`, `source_file` `NAME:<file>`,
+`href` `URL#node=<id>`), in a community of its own named NAME, with a `depends_on` edge from the file
+that holds the reference (a file the walk does not parse gets a node for this). Only fields and
+relations are added; without `--link` the graph.json is the same bytes as before. ⚠ Rule 3 trusts the
+key: it needs no mention of NAME, only a PATH that exists in the linked graph. Rule 2 does not read
+a REV that contains a `/`.
+
+In graph.html an external node is a dashed ring, with the legend entry `external: NAME`, and a click on
+it opens its `href`; the side panel shows the same link. A page opened with `#node=<id>` selects that
+node and centres the view on it. The page loads nothing: the link is a relative `<a>` that the viewer
+script sets, only on external nodes.
+
+ptbr-writer publishes two pages, `grafo/picasso.html` and `grafo/graph.html`:
+
+```sh
+code-graph extract forks/picasso --out build/grafo-picasso --title picasso
+code-graph extract . --exclude forks --link picasso=build/grafo-picasso/graph.json@picasso.html --title ptbr-writer
+```
+
+The second run already skips `forks/picasso` (a submodule has its own `.git`), so `--exclude forks` is
+a second guard. On ptbr-writer at `adfa9a5`, with picasso `4bc03e5`: 4 external nodes (the `flake.nix`
+of `labs/gleam-website`, `labs/code-graph`, `labs/ptbr-pdf` and `labs/ptbr-tools`) and 15 edges from
+10 files. Measured with this binary on x86_64-linux; the pages were not published.
 
 ## Reusing it from another repository
 
