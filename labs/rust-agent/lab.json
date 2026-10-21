@@ -1,0 +1,4 @@
+{
+  "summary": "rustc, cargo, clippy, rust-analyzer, nextest, deny, audit for a Rust agent, one list",
+  "headline": ["rustc", "cargo", "rust-analyzer", "cargo-nextest"]
+}
