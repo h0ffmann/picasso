@@ -32,6 +32,15 @@ and ptbr-writer's `scripts/pdf-bench.sh`.
 | 2. Rust + Typst, first build | one binary, all of `typst-assets`' fonts | 46.7 MiB static | 13.7 MiB (`xz -9`) | 17 min through Nix ⚠ |
 | 3. **Rust + Typst, slim** | six fonts, `opt-level = "z"`, `lto = "fat"`, `panic = "abort"`, stripped | **25.2 MiB static** | **8.1 MiB** (`xz -9`), 10.8 MiB (gzip) | **0.2 s** to convert a page |
 
+> **⚠ xz.** The xz sizes are a measurement only: nothing here ships an `.xz` file. If a release
+> asset is ever compressed with xz, use xz 5.8.4 or newer from the lab's pinned nixpkgs (the lock
+> has 5.8.4), never the host's. XZ Utils had a backdoor in 5.6.0 and 5.6.1
+> ([CVE-2024-3094](https://nvd.nist.gov/vuln/detail/CVE-2024-3094)) and memory-safety fixes in 5.8.1
+> ([CVE-2025-31115](https://github.com/tukaani-project/xz/security/advisories/GHSA-6cc8-p5mm-29w2)),
+> 5.8.3 ([CVE-2026-34743](https://github.com/tukaani-project/xz/security/advisories/GHSA-x872-m794-cxhv))
+> and 5.8.4 ([GHSA-5qpq-xqfv-j9pg](https://github.com/tukaani-project/xz/security/advisories/GHSA-5qpq-xqfv-j9pg)).
+> Prefer zstd or gzip for assets.
+
 - Step 1 to step 3: **29× less on disk and 25× less to download.**
 - ⚠ Through Nix, row 2 took 17 minutes on a fresh 4-core runner: the binary is not in
   cache.nixos.org, so Nix compiles Typst and 326 crates. Download the prebuilt static binary
