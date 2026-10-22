@@ -13,9 +13,24 @@
 
       # The toolchain of picasso's own site/ (Gleam + Lustre, bundled by esbuild). A site pins its
       # Hex packages by checksum in its manifest.toml; everything else comes from here.
+      nodeFor = pkgs: pkgs.callPackage ./nodejs-bin.nix { };
+
+      # The October 2026 security release (nodejs.org/en/blog/vulnerability/october-2026-security-releases):
+      # the scanners' databases lag the advisory, so the minimum is stated here and checked in CI.
+      nodeVersionFor = pkgs:
+        let node = nodeFor pkgs; in
+        assert lib.assertMsg (lib.versionAtLeast node.version "24.22.1")
+          "gleam-website: node ${node.version} is below 24.22.1, the October 2026 security release";
+        pkgs.runCommand "gleam-website-node-version" { nativeBuildInputs = [ node ]; } ''
+          node --version | tee "$out"
+        '';
+
       toolsFor = pkgs: with pkgs; [
         gleam
-        nodejs # gleam test, gleam run (the prerender) and the bundle check run on node
+        # gleam test, gleam run (the prerender) and the bundle check run on node: the official
+        # 24.22.1 build (nodejs-bin.nix), the October 2026 security release, until nixpkgs ships it.
+        # Only this list gets it: an overlay of pkgs.nodejs would rebuild erlang and webkitgtk.
+        (nodeFor pkgs)
         esbuild
         just
         python3 # the small generators and checks a site keeps next to its Gleam code
@@ -89,6 +104,7 @@
 
       checks = forAll (pkgs: {
         lab-json = labCardFor pkgs;
+        node-version = nodeVersionFor pkgs;
         versions = self.packages.${pkgs.stdenv.hostPlatform.system}.versions;
         smoke = self.packages.${pkgs.stdenv.hostPlatform.system}.smoke;
       });
