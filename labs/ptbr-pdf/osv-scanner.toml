@@ -1,0 +1,44 @@
+# OSV-Scanner exceptions for this lab's Cargo.lock (.github/workflows/cve.yml). Each entry is an
+# advisory that has no fix this lab can take: the crate comes in through typst, and only a typst
+# update moves it. ignoreUntil makes the scan fail again on that date, so each one is read again.
+# Read from api.osv.dev on 2026-10-22.
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0194"
+ignoreUntil = 2027-01-22T00:00:00Z
+reason = "quick-xml 0.38.4, quadratic time on duplicate attributes. It comes from typst's citationberg and plist; the lock already has 0.42.0 for the rest. Whether to-pdf ever hands it untrusted XML was not checked. Fixed in 0.41.0: drop this when typst updates."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0195"
+ignoreUntil = 2027-01-22T00:00:00Z
+reason = "quick-xml 0.38.4, unbounded namespace allocation in NsReader. Same path and same fix as RUSTSEC-2026-0194."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2025-0141"
+ignoreUntil = 2027-01-22T00:00:00Z
+reason = "bincode is unmaintained (no known flaw); it comes from typst's dependencies."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0436"
+ignoreUntil = 2027-01-22T00:00:00Z
+reason = "paste is unmaintained (no known flaw); it comes from typst's dependencies."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0206"
+ignoreUntil = 2027-01-22T00:00:00Z
+reason = "rustybuzz is unmaintained (no known flaw); typst's text shaping."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0192"
+ignoreUntil = 2027-01-22T00:00:00Z
+reason = "ttf-parser is unmaintained (no known flaw); typst's font parsing, of the six embedded fonts."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0449"
+ignoreUntil = 2027-01-22T00:00:00Z
+reason = "unsafe-libyaml is unmaintained (no known flaw); it comes from typst's dependencies."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0320"
+ignoreUntil = 2027-01-22T00:00:00Z
+reason = "yaml-rust is unmaintained (no known flaw); it comes from typst's dependencies."
