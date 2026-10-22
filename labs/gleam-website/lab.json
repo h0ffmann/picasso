@@ -1,4 +1,4 @@
 {
   "summary": "Gleam on the JavaScript target, node, esbuild, just: static sites in picasso's style",
-  "headline": ["gleam", "nodejs", "esbuild", "just"]
+  "headline": ["gleam", "esbuild", "just"]
 }

@@ -43,7 +43,7 @@ Lustre application, `src/<app>/prerender.gleam` prints the first render as `dist
 | Type       | Program |
 | :--------- | :-----: |
 | Language   | [Gleam 1.19](https://gleam.run/) on the JavaScript target; sites use [Lustre](https://lustre.build) from Hex |
-| Runtime    | [Node.js 24](https://nodejs.org/) (`gleam test`, `gleam run` for the prerender) |
+| Runtime    | [Node.js 24.22.1](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases), the official nodejs.org build pinned by sha256 in `nodejs-bin.nix` until nixpkgs ships it (`gleam test`, `gleam run` for the prerender); `checks.node-version` fails below 24.22.1 |
 | Bundler    | [esbuild](https://esbuild.github.io/) |
 | Scripting  | [just](https://github.com/casey/just), python 3 |
 | Reuse      | `lib.<system>.tools`, `packages.<system>.{gleam, esbuild}`, `checks.<system>.{smoke, versions}` |

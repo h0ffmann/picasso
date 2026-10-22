@@ -1,0 +1,41 @@
+# cve: known vulnerabilities in what this repository pins. Runs on main after each merge, on each
+# pull request, and every Monday, so an advisory published after a merge still turns main red.
+#
+# - osv: OSV-Scanner reads every lock file (the labs' Cargo.lock, package-lock.json) against
+#   osv.dev. An advisory with no fix the lab can take is listed, with its reason and an expiry
+#   date, in that lab's osv-scanner.toml.
+# - node: is-my-node-vulnerable checks the Node that labs/gleam-website gives against Node.js's own
+#   advisories (nodejs/security-wg). Those advisories lag the Node.js blog, so the lab also states
+#   its minimum Node in checks.node-version, which ci.yml builds.
+name: cve
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  osv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - name: OSV-Scanner over every lock file
+        run: nix run nixpkgs#osv-scanner -- scan source --recursive .
+
+  node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - name: is-my-node-vulnerable, on the Node of labs/gleam-website
+        working-directory: labs/gleam-website
+        run: nix develop --no-update-lock-file --command bash -c 'node --version && npx --yes is-my-node-vulnerable@1.6.1'
