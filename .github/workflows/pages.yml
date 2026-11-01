@@ -34,7 +34,7 @@ jobs:
       - name: build, test and check the hard rules
         working-directory: site
         run: nix develop --no-update-lock-file -c just ci
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site/dist
